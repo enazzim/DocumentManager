@@ -12,6 +12,9 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect
 
+cors:
+  allowed-origins: "${FRONTEND_URL:http://localhost:5173}"
+
 logging:
   level:
     com.dms: INFO
