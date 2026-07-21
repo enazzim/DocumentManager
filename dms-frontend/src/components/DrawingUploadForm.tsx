@@ -599,33 +599,27 @@ export const DrawingUploadForm: React.FC<DrawingUploadFormProps> = ({ onSuccessN
         </button>
       </form>
 
-      {/* 5. 폼 최하단: 백엔드 DB 연동 최신 정상 도면 미니 테이블 */}
-      <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <div>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>📋 최근 등록된 정상 도면 내역 (DB 동적 연동)</span>
-              <span style={{ fontSize: '11.5px', backgroundColor: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '10px', fontWeight: '700' }}>
-                🔄 실시간 동기화중
-              </span>
-            </h3>
-            <p style={{ fontSize: '12.5px', color: '#64748b', margin: '2px 0 0 0' }}>
-              레코드를 클릭하면 해당 도면의 파일 미리보기 및 BOM 상세 화면으로 즉시 이동합니다.
-            </p>
-          </div>
+      {/* 5. 실시간 동적 DB 최근 등록된 도면 내역 미니 테이블 */}
+      <div style={{ marginTop: '28px', backgroundColor: '#ffffff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📋 최근 등록된 정상 도면 내역 (DB 동적 연동)</span>
+            <span style={{ fontSize: '11.5px', backgroundColor: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '12px', fontWeight: '700', whiteSpace: 'nowrap' }}>⚡ 실시간 동기화중</span>
+          </h3>
+          <span style={{ fontSize: '12px', color: '#64748b' }}>레코드를 클릭하면 해당 도면의 파일 미리보기 및 BOM 상세 화면으로 즉시 이동합니다.</span>
         </div>
 
-        <div style={{ border: '1px solid #cbd5e1', borderRadius: '10px', overflow: 'hidden', backgroundColor: '#ffffff' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', minWidth: '950px', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ backgroundColor: '#f1f5f9', color: '#334155', textAlign: 'left', fontWeight: '600' }}>
-                <th style={{ padding: '10px 12px' }}>문서 ID</th>
-                <th style={{ padding: '10px 12px' }}>도면 번호</th>
-                <th style={{ padding: '10px 12px' }}>도면 제목</th>
-                <th style={{ padding: '10px 12px' }}>단계</th>
-                <th style={{ padding: '10px 12px' }}>개정차수</th>
-                <th style={{ padding: '10px 12px' }}>첨부 파일</th>
-                <th style={{ padding: '10px 12px', textAlign: 'center' }}>상세 보기</th>
+                <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>번호</th>
+                <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>도면 번호</th>
+                <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>도면 제목</th>
+                <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>단계</th>
+                <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>개정차수</th>
+                <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>첨부 파일</th>
+                <th style={{ padding: '10px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>상세 보기</th>
               </tr>
             </thead>
             <tbody>
@@ -642,10 +636,10 @@ export const DrawingUploadForm: React.FC<DrawingUploadFormProps> = ({ onSuccessN
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#eff6ff')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
                   >
-                    <td style={{ padding: '10px 12px', fontWeight: '700', color: '#64748b' }}>#{doc.documentId}</td>
-                    <td style={{ padding: '10px 12px', fontWeight: '700', color: '#2563eb' }}>{doc.docNumber}</td>
-                    <td style={{ padding: '10px 12px', fontWeight: '600', color: '#0f172a' }}>{doc.title}</td>
-                    <td style={{ padding: '10px 12px' }}>
+                    <td style={{ padding: '10px 12px', fontWeight: '700', color: '#64748b', whiteSpace: 'nowrap' }}>{doc.documentId}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: '700', color: '#2563eb', whiteSpace: 'nowrap' }}>{doc.docNumber}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: '600', color: '#0f172a', whiteSpace: 'nowrap' }}>{doc.title}</td>
+                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
                       {doc.stage === 'DEVELOPMENT' ? (
                         <span style={badgeStyle('#fef3c7', '#b45309')}>🧪 개발/시제품</span>
                       ) : (

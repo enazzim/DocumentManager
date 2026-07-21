@@ -115,6 +115,7 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
     fontSize: '12px',
     fontWeight: '700',
     display: 'inline-block',
+    whiteSpace: 'nowrap'
   });
 
   const currentList = activeTab === 'ACTIVE' ? documents : trashDocuments;
@@ -141,7 +142,7 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
 
         <button
           onClick={onNavigateUpload}
-          style={{ backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '10px 18px', borderRadius: '8px', fontWeight: '700', fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+          style={{ backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '10px 18px', borderRadius: '8px', fontWeight: '700', fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
         >
           ➕ 신규 도면 기안 등록
         </button>
@@ -162,7 +163,8 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
             color: activeTab === 'ACTIVE' ? '#ffffff' : '#64748b',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '8px',
+            whiteSpace: 'nowrap'
           }}
         >
           📂 정상 도면 대장 <span style={{ backgroundColor: activeTab === 'ACTIVE' ? 'rgba(255,255,255,0.25)' : '#e2e8f0', color: activeTab === 'ACTIVE' ? '#ffffff' : '#475569', padding: '2px 8px', borderRadius: '12px', fontSize: '12px' }}>{documents.length}</span>
@@ -181,7 +183,8 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
             color: activeTab === 'TRASH' ? '#ffffff' : '#64748b',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '8px',
+            whiteSpace: 'nowrap'
           }}
         >
           🗑️ 도면 휴지통 (삭제 보관함) <span style={{ backgroundColor: activeTab === 'TRASH' ? 'rgba(255,255,255,0.25)' : '#e2e8f0', color: activeTab === 'TRASH' ? '#ffffff' : '#475569', padding: '2px 8px', borderRadius: '12px', fontSize: '12px' }}>{trashDocuments.length}</span>
@@ -201,7 +204,7 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
         <select
           value={stageFilter}
           onChange={(e) => setStageFilter(e.target.value as any)}
-          style={{ padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13.5px', backgroundColor: '#ffffff', cursor: 'pointer' }}
+          style={{ padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13.5px', backgroundColor: '#ffffff', cursor: 'pointer', whiteSpace: 'nowrap' }}
         >
           <option value="ALL">전체 진행 단계 보기</option>
           <option value="DEVELOPMENT">🧪 시제품/개발 단계</option>
@@ -210,39 +213,39 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
       </div>
 
       {/* 도면 대장 레코드 테이블 */}
-      <div style={{ border: '1px solid #cbd5e1', borderRadius: '10px', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px' }}>
+      <div style={{ border: '1px solid #cbd5e1', borderRadius: '10px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ width: '100%', minWidth: '1100px', borderCollapse: 'collapse', fontSize: '13.5px' }}>
           <thead>
             <tr style={{ backgroundColor: '#f1f5f9', color: '#334155', textAlign: 'left', fontWeight: '600' }}>
-              <th style={{ padding: '12px 14px' }}>문서 ID</th>
-              <th style={{ padding: '12px 14px' }}>도면 번호</th>
-              <th style={{ padding: '12px 14px' }}>도면 제목 / 부품명</th>
-              <th style={{ padding: '12px 14px' }}>단계</th>
-              <th style={{ padding: '12px 14px' }}>개정 차수</th>
-              <th style={{ padding: '12px 14px' }}>사내 품번</th>
-              <th style={{ padding: '12px 14px' }}>BOM 항목</th>
-              <th style={{ padding: '12px 14px' }}>상태</th>
-              <th style={{ padding: '12px 14px', textAlign: 'center' }}>작업 (조회 / 수정 / 복구 / 영구삭제)</th>
+              <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>번호</th>
+              <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>도면 번호</th>
+              <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>도면 제목 / 부품명</th>
+              <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>단계</th>
+              <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>개정 차수</th>
+              <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>사내 품번</th>
+              <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>BOM 항목</th>
+              <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>상태</th>
+              <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>작업 (조회 / 수정 / 복구 / 영구삭제)</th>
             </tr>
           </thead>
           <tbody>
             {filteredDocs.length > 0 ? (
               filteredDocs.map((doc) => (
                 <tr key={doc.documentId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '14px', fontWeight: '700', color: '#64748b' }}>#{doc.documentId}</td>
-                  <td style={{ padding: '14px', fontWeight: '700', color: '#2563eb' }}>{doc.docNumber}</td>
-                  <td style={{ padding: '14px', fontWeight: '600', color: '#0f172a' }}>{doc.title}</td>
-                  <td style={{ padding: '14px' }}>
+                  <td style={{ padding: '14px', fontWeight: '700', color: '#64748b', whiteSpace: 'nowrap' }}>{doc.documentId}</td>
+                  <td style={{ padding: '14px', fontWeight: '700', color: '#2563eb', whiteSpace: 'nowrap' }}>{doc.docNumber}</td>
+                  <td style={{ padding: '14px', fontWeight: '600', color: '#0f172a', whiteSpace: 'nowrap' }}>{doc.title}</td>
+                  <td style={{ padding: '14px', whiteSpace: 'nowrap' }}>
                     {doc.lifecycleStatus === 'DEVELOPMENT' || doc.title?.includes('[개발/시제품]') ? (
                       <span style={badgeStyle('#fef3c7', '#b45309')}>🧪 개발/시제품</span>
                     ) : (
                       <span style={badgeStyle('#dcfce7', '#15803d')}>🏭 양산 확정</span>
                     )}
                   </td>
-                  <td style={{ padding: '14px', fontWeight: '700' }}>{doc.revision}</td>
-                  <td style={{ padding: '14px', color: '#475569' }}>{doc.partNumber || '미발급 (시제품 샘플)'}</td>
-                  <td style={{ padding: '14px', fontWeight: '600', color: '#0f172a' }}>{doc.bomList?.length || 0} 건</td>
-                  <td style={{ padding: '14px' }}>
+                  <td style={{ padding: '14px', fontWeight: '700', whiteSpace: 'nowrap' }}>{doc.revision}</td>
+                  <td style={{ padding: '14px', color: '#475569', whiteSpace: 'nowrap' }}>{doc.partNumber || '미발급 (시제품 샘플)'}</td>
+                  <td style={{ padding: '14px', fontWeight: '600', color: '#0f172a', whiteSpace: 'nowrap' }}>{doc.bomList?.length || 0} 건</td>
+                  <td style={{ padding: '14px', whiteSpace: 'nowrap' }}>
                     {activeTab === 'TRASH' ? (
                       <span style={badgeStyle('#fef2f2', '#991b1b')}>🗑️ 휴지통 보관중</span>
                     ) : doc.fileStatus === 'ACTIVE' ? (
@@ -251,35 +254,35 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
                       <span style={badgeStyle('#eff6ff', '#1d4ed8')}>도면 저장완료</span>
                     )}
                   </td>
-                  <td style={{ padding: '14px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                  <td style={{ padding: '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', whiteSpace: 'nowrap' }}>
                       {activeTab === 'ACTIVE' ? (
                         <>
                           <button
                             type="button"
                             onClick={() => onSelectDocument(doc.documentId)}
-                            style={{ backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '6px 10px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '12px' }}
+                            style={{ backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '6px 10px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
                           >
                             🔍 조회
                           </button>
                           <button
                             type="button"
                             onClick={() => onSelectDocument(doc.documentId)}
-                            style={{ backgroundColor: '#0284c7', color: '#ffffff', border: 'none', padding: '6px 10px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '12px' }}
+                            style={{ backgroundColor: '#0284c7', color: '#ffffff', border: 'none', padding: '6px 10px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
                           >
                             🔄 개정
                           </button>
                           <button
                             type="button"
                             onClick={() => onEditDocument ? onEditDocument(doc.documentId) : onNavigateUpload()}
-                            style={{ backgroundColor: '#059669', color: '#ffffff', border: 'none', padding: '6px 10px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '12px' }}
+                            style={{ backgroundColor: '#059669', color: '#ffffff', border: 'none', padding: '6px 10px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
                           >
                             ✏️ 수정
                           </button>
                           <button
                             type="button"
                             onClick={() => handleMoveToTrash(doc.documentId, doc.docNumber)}
-                            style={{ backgroundColor: '#dc2626', color: '#ffffff', border: 'none', padding: '6px 10px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '12px' }}
+                            style={{ backgroundColor: '#dc2626', color: '#ffffff', border: 'none', padding: '6px 10px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
                           >
                             🗑️ 휴지통 이동
                           </button>
@@ -289,7 +292,7 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleRestoreFromTrash(doc.documentId, doc.docNumber)}
-                            style={{ backgroundColor: '#059669', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '12px' }}
+                            style={{ backgroundColor: '#059669', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
                           >
                             ♻️ 원복 (복구)
                           </button>

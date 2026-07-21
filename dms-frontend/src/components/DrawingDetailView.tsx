@@ -350,31 +350,31 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
           </h3>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', minWidth: '850px', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', textAlign: 'left' }}>
-                <th style={{ padding: '10px 12px' }}>버전</th>
-                <th style={{ padding: '10px 12px' }}>개정 차수</th>
-                <th style={{ padding: '10px 12px' }}>개정 변경 사유 (Audit Log)</th>
-                <th style={{ padding: '10px 12px' }}>작성자</th>
-                <th style={{ padding: '10px 12px' }}>등록 일시</th>
-                <th style={{ padding: '10px 12px', textAlign: 'center' }}>상태 및 파일</th>
+                <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>버전</th>
+                <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>개정 차수</th>
+                <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>개정 변경 사유 (Audit Log)</th>
+                <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>작성자</th>
+                <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>등록 일시</th>
+                <th style={{ padding: '10px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>상태 및 파일</th>
               </tr>
             </thead>
             <tbody>
               {historyList.map((item, index) => (
                 <tr key={index} style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: item.status === 'ACTIVE' ? '#f0fdf4' : '#ffffff' }}>
-                  <td style={{ padding: '10px 12px', fontWeight: '700', color: item.status === 'ACTIVE' ? '#166534' : '#64748b' }}>v{item.version}</td>
-                  <td style={{ padding: '10px 12px', fontWeight: '700', color: item.status === 'ACTIVE' ? '#166534' : '#2563eb' }}>{item.revision}</td>
-                  <td style={{ padding: '10px 12px', fontWeight: '600', color: '#0f172a' }}>{item.changeReason}</td>
-                  <td style={{ padding: '10px 12px', color: '#475569' }}>{item.author}</td>
-                  <td style={{ padding: '10px 12px', color: '#64748b' }}>{item.createdAt}</td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                  <td style={{ padding: '10px 12px', fontWeight: '700', color: item.status === 'ACTIVE' ? '#166534' : '#64748b', whiteSpace: 'nowrap' }}>v{item.version}</td>
+                  <td style={{ padding: '10px 12px', fontWeight: '700', color: item.status === 'ACTIVE' ? '#166534' : '#2563eb', whiteSpace: 'nowrap' }}>{item.revision}</td>
+                  <td style={{ padding: '10px 12px', fontWeight: '600', color: '#0f172a', whiteSpace: 'nowrap' }}>{item.changeReason}</td>
+                  <td style={{ padding: '10px 12px', color: '#475569', whiteSpace: 'nowrap' }}>{item.author}</td>
+                  <td style={{ padding: '10px 12px', color: '#64748b', whiteSpace: 'nowrap' }}>{item.createdAt}</td>
+                  <td style={{ padding: '10px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                     {item.status === 'ACTIVE' ? (
                       <span style={badgeStyle('#dcfce7', '#15803d')}>🟢 현행 최신차수</span>
                     ) : (
-                      <button onClick={() => handleOpenPdfFile(item.revision)} style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '6px', fontSize: '11.5px', cursor: 'pointer' }}>
+                      <button onClick={() => handleOpenPdfFile(item.revision)} style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '6px', fontSize: '11.5px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                         📦 구버전 도면 열기 ({item.revision})
                       </button>
                     )}
