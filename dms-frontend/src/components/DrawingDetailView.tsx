@@ -75,7 +75,7 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
               version: v,
               revision: revName,
               changeReason: reasonText,
-              author: isLatest ? '홍길동 수석연구원' : '시스템 사용자',
+              author: CURRENT_LOGGED_IN_USER,
               createdAt: logDate ? new Date(logDate).toLocaleString() : (data.createdAt ? new Date(data.createdAt).toLocaleString() : new Date().toLocaleString()),
               status: isLatest ? 'ACTIVE' : 'SUPERSEDED'
             });
@@ -140,7 +140,7 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
         version: v,
         revision: revName,
         changeReason: reasonText,
-        author: isLatest ? '홍길동 수석연구원' : '시스템 사용자',
+        author: CURRENT_LOGGED_IN_USER,
         createdAt: logDate ? new Date(logDate).toLocaleString() : (newDoc.createdAt ? new Date(newDoc.createdAt).toLocaleString() : new Date().toLocaleString()),
         status: isLatest ? 'ACTIVE' : 'SUPERSEDED'
       });
