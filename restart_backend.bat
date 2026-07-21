@@ -16,7 +16,11 @@ echo Moving to dms-backend directory...
 cd /d "%PROJECT_ROOT%dms-backend"
 echo Current Working Directory: %CD%
 
-echo Starting Spring Boot Backend via gradle...
-call gradle bootRun
+echo Starting Spring Boot Backend via Gradle Wrapper (gradlew)...
+if exist "gradlew.bat" (
+    call gradlew.bat bootRun
+) else (
+    call gradle bootRun
+)
 
 pause
