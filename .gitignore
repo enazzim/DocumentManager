@@ -1,0 +1,15 @@
+# Build & IDE
+.idea/
+.vscode/
+*.swp
+*.tmp
+*.log
+node_modules/
+dist/
+target/
+.DS_Store
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
