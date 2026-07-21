@@ -30,8 +30,10 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
       const response = await axios.get('/api/v1/documents');
       const docs = response.data?.data || response.data || [];
       if (Array.isArray(docs)) {
-        const actives = docs.filter((d: any) => !d.isDeleted && d.lifecycleStatus !== 'DELETED');
-        const trashes = docs.filter((d: any) => d.isDeleted || d.lifecycleStatus === 'DELETED');
+        const actives = docs.filter((d: any) => !d.isDeleted && d.lifecycleStatus !== 'DELETED')
+                            .sort((a: any, b: any) => (b.documentId || b.id || 0) - (a.documentId || a.id || 0));
+        const trashes = docs.filter((d: any) => d.isDeleted || d.lifecycleStatus === 'DELETED')
+                            .sort((a: any, b: any) => (b.documentId || b.id || 0) - (a.documentId || a.id || 0));
         setDocuments(actives);
         setTrashDocuments(trashes);
       }

@@ -119,6 +119,7 @@ public class DocumentService {
 
     public List<DocumentResponse> getAllDocuments() {
         return documentRepository.findAll().stream()
+                .sorted((d1, d2) -> Long.compare(d2.getDocumentId(), d1.getDocumentId()))
                 .map(doc -> {
                     DrawingDetail detail = drawingDetailRepository.findByDocument_DocumentId(doc.getDocumentId()).orElse(null);
                     return convertToResponse(doc, detail, null);

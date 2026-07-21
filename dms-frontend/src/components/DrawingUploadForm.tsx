@@ -57,6 +57,7 @@ export const DrawingUploadForm: React.FC<DrawingUploadFormProps> = ({ onSuccessN
       const docs = response.data?.data || response.data || [];
       if (Array.isArray(docs)) {
         const activeDocs = docs.filter((d: any) => !d.isDeleted && d.lifecycleStatus !== 'DELETED');
+        activeDocs.sort((a: any, b: any) => (b.documentId || b.id || 0) - (a.documentId || a.id || 0));
         const mapped: MiniDocRecord[] = activeDocs.map((d: any) => ({
           documentId: d.documentId || d.id,
           docNumber: d.docNumber,
