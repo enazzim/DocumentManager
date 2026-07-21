@@ -95,12 +95,12 @@ public class DocumentService {
             drawingBomRepository.saveAll(boms);
         }
 
-        // 4. 감사 로그 기록
+        // 4. 감사 로그 기록 (신규 기안 최초 등록 명시)
         DocumentAuditLog auditLog = DocumentAuditLog.builder()
                 .documentId(savedDoc.getDocumentId())
                 .actionType("CREATE")
                 .actorId(savedDoc.getAuthorId())
-                .reason("도면 기안/수정 (" + request.getDocType() + ")")
+                .reason("[신규 기안] 신규 도면 최초 등록 완료 (" + (request.getDocType() == DocType.EXTERNAL ? "거래처 수신" : "사내 기안") + ")")
                 .build();
         auditLogRepository.save(auditLog);
 

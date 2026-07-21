@@ -53,12 +53,14 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
             let reasonText = '';
             let logDate = null;
 
-            if (log && log.reason) {
+            if (v === 1) {
+              reasonText = (log && log.reason && !log.reason.includes('도면 기안/수정'))
+                ? log.reason
+                : `[신규 기안] ${data.title} (${data.docNumber}) 최초 기안 등록 완료`;
+              logDate = (log && log.createdAt) ? log.createdAt : data.createdAt;
+            } else if (log && log.reason) {
               reasonText = log.reason;
               logDate = log.createdAt;
-            } else if (v === 1) {
-              reasonText = `[기안 등록] ${data.title} (${data.docNumber}) 최초 기안`;
-              logDate = data.createdAt;
             } else {
               reasonText = `[개정] V1-${v} 차수 개정 완료`;
               logDate = isLatest ? data.updatedAt : data.createdAt;
@@ -118,12 +120,14 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
       let reasonText = '';
       let logDate = null;
 
-      if (log && log.reason) {
+      if (v === 1) {
+        reasonText = (log && log.reason && !log.reason.includes('도면 기안/수정'))
+          ? log.reason
+          : `[신규 기안] ${newDoc.title} (${newDoc.docNumber}) 최초 기안 등록 완료`;
+        logDate = (log && log.createdAt) ? log.createdAt : newDoc.createdAt;
+      } else if (log && log.reason) {
         reasonText = log.reason;
         logDate = log.createdAt;
-      } else if (v === 1) {
-        reasonText = `[기안 등록] ${newDoc.title} (${newDoc.docNumber}) 최초 기안`;
-        logDate = newDoc.createdAt;
       } else {
         reasonText = `[개정] V1-${v} 차수 개정 완료`;
         logDate = isLatest ? newDoc.updatedAt : newDoc.createdAt;
