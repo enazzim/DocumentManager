@@ -9,8 +9,8 @@
 
 ## 2. 프로젝트 구조
 - `docs/`: 설계 문서, 도메인 모델 명세서, UI 설계서, 기술 아키텍처 등
-- `backend/`: (구현 예정) Spring Boot 백엔드 애플리케이션
-- `frontend/`: (구현 예정) React / Vite / TypeScript 프론트엔드 애플리케이션
+- `dms-backend/`: (구현 예정) Spring Boot 백엔드 애플리케이션
+- `dms-frontend/`: (구현 예정) React / Vite / TypeScript 프론트엔드 애플리케이션
 
 ## 3. 관련 문서
 - [시스템 개요서](docs/260721_결재문서도면관리_시스템개요서.md)
