@@ -1,122 +1,87 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState } from 'react';
+import { Layout } from './components/Layout';
+import { Dashboard } from './components/Dashboard';
+import { DrawingUploadForm } from './components/DrawingUploadForm';
+import { DrawingDetailView } from './components/DrawingDetailView';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [activeMenu, setActiveMenu] = useState('dashboard');
+  const [selectedDocId, setSelectedDocId] = useState<number>(1);
+
+  const handleNavigateToDetail = (docId: number) => {
+    setSelectedDocId(docId);
+    setActiveMenu('drawing-detail');
+  };
+
+  const containerStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '24px',
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    border: '1px solid #e2e8f0',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+  };
+
+  const renderContent = () => {
+    switch (activeMenu) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'approval-submit':
+        return (
+          <div style={containerStyle}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a' }}>결재선 지정 & 상신</h2>
+            <p style={{ color: '#64748b', marginTop: '6px' }}>전자 결재 상신 및 차수별 결재자 지정 구역입니다.</p>
+          </div>
+        );
+      case 'approval-action':
+        return (
+          <div style={containerStyle}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a' }}>결재 심사 (승인/반려)</h2>
+            <p style={{ color: '#64748b', marginTop: '6px' }}>결재자 전용 도면 검토 및 승인/반려 심사 구역입니다.</p>
+          </div>
+        );
+      case 'approval-list':
+        return (
+          <div style={containerStyle}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a' }}>결재 진행 문서함</h2>
+            <p style={{ color: '#64748b', marginTop: '6px' }}>진행 중이거나 승인 완료된 결재 문서 대장입니다.</p>
+          </div>
+        );
+      case 'doc-upload':
+        return (
+          <div style={containerStyle}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a' }}>일반 문서 기안 등록</h2>
+            <p style={{ color: '#64748b', marginTop: '6px' }}>일반 서류/보고서 기안 작성 구역입니다.</p>
+          </div>
+        );
+      case 'doc-list':
+        return (
+          <div style={containerStyle}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a' }}>일반 문서 대장 조회</h2>
+            <p style={{ color: '#64748b', marginTop: '6px' }}>등록된 일반 문서를 통합 조회합니다.</p>
+          </div>
+        );
+      case 'drawing-upload':
+        return <DrawingUploadForm onSuccessNavigate={handleNavigateToDetail} />;
+      case 'drawing-detail':
+        return <DrawingDetailView documentId={selectedDocId} />;
+      case 'sse-monitor':
+        return (
+          <div style={containerStyle}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a' }}>현장 단말 SSE 실시간 모니터링</h2>
+            <p style={{ color: '#64748b', marginTop: '6px' }}>현장 단말기 화면 원격 강제 제어 및 SSE 실시간 대시보드 구역입니다.</p>
+          </div>
+        );
+      default:
+        return <Dashboard />;
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <Layout activeMenu={activeMenu} onSelectMenu={setActiveMenu}>
+      {renderContent()}
+    </Layout>
+  );
 }
 
-export default App
+export default App;

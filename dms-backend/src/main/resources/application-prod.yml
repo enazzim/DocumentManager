@@ -15,6 +15,11 @@ spring:
 cors:
   allowed-origins: "${FRONTEND_URL:http://localhost:5173}"
 
+storage:
+  type: ${STORAGE_TYPE:s3}
+  local:
+    upload-dir: ${STORAGE_LOCAL_DIR:uploads}
+
 logging:
   level:
     com.dms: INFO
