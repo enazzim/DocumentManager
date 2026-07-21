@@ -165,7 +165,7 @@ public class DocumentController {
                     customFileName = targetFile.getName();
                 }
 
-                String encodedFileName = java.net.URLEncoder.encode(customFileName, java.nio.charset.StandardCharsets.UTF_8.name())
+                String encodedFileName = java.net.URLEncoder.encode(customFileName, java.nio.charset.StandardCharsets.UTF_8)
                         .replaceAll("\\+", "%20");
 
                 String disposition = download
