@@ -42,45 +42,52 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
         if (data && data.docNumber) {
           setDoc(data);
           const histories: RevisionHistoryItem[] = [];
+          const versionCount = Math.max(1, data.version || 1);
+
           if (data.auditLogs && data.auditLogs.length > 0) {
-            data.auditLogs.forEach((log, idx) => {
-              histories.push({
-                version: Math.max(1, (data.version || 1) - idx),
-                revision: idx === 0 ? data.revision : `V1-${Math.max(1, (data.version || 1) - idx)}`,
-                changeReason: log.reason || `[개정] ${log.actionType}`,
-                author: '홍길동 수석연구원',
-                createdAt: log.createdAt ? new Date(log.createdAt).toLocaleString() : new Date().toLocaleString(),
-                status: idx === 0 ? 'ACTIVE' : 'SUPERSEDED'
-              });
-            });
-          } else if (data.version && data.version > 1) {
-            histories.push({
-              version: data.version,
-              revision: data.revision || `V1-${data.version}`,
-              changeReason: `[최신 개정] ${data.revision} 개정 완료`,
-              author: '홍길동 수석연구원',
-              createdAt: data.updatedAt ? new Date(data.updatedAt).toLocaleString() : new Date().toLocaleString(),
-              status: 'ACTIVE'
-            });
-            for (let v = data.version - 1; v >= 1; v--) {
+            const revLogs = data.auditLogs.filter(l => l.actionType && l.actionType.startsWith('REVISION_UP'));
+            
+            for (let v = versionCount; v >= 1; v--) {
+              const isLatest = v === versionCount;
+              const logIdx = versionCount - v - 1; // v3 -> latest, v2 -> logIdx 0, etc.
+
+              let reasonText = '';
+              let logDate = null;
+
+              if (isLatest && revLogs.length > 0) {
+                reasonText = revLogs[0].reason ? revLogs[0].reason : `[개정] ${data.revision} 차수 개정 완료`;
+                logDate = revLogs[0].createdAt;
+              } else if (logIdx >= 0 && logIdx < revLogs.length) {
+                reasonText = revLogs[logIdx].reason ? revLogs[logIdx].reason : `[개정] V1-${v} 차수 개정 완료`;
+                logDate = revLogs[logIdx].createdAt;
+              } else if (v === 1) {
+                reasonText = `[기안 등록] ${data.title} (${data.docNumber}) 최초 기안`;
+                logDate = data.createdAt;
+              } else {
+                reasonText = `[개정] V1-${v} 차수 개정 완료`;
+              }
+
               histories.push({
                 version: v,
-                revision: `V1-${v}`,
-                changeReason: `[기안 등록] ${data.title} (${data.docNumber}) 최초 기안`,
-                author: '시스템 사용자',
-                createdAt: data.createdAt ? new Date(data.createdAt).toLocaleString() : new Date().toLocaleString(),
-                status: 'SUPERSEDED'
+                revision: isLatest ? data.revision : `V1-${v}`,
+                changeReason: reasonText,
+                author: isLatest ? '홍길동 수석연구원' : '시스템 사용자',
+                createdAt: logDate ? new Date(logDate).toLocaleString() : (data.createdAt ? new Date(data.createdAt).toLocaleString() : new Date().toLocaleString()),
+                status: isLatest ? 'ACTIVE' : 'SUPERSEDED'
               });
             }
           } else {
-            histories.push({
-              version: 1,
-              revision: data.revision || 'V1-1',
-              changeReason: `[기안 등록] ${data.title} (${data.docNumber}) 등록 완료`,
-              author: '시스템 사용자',
-              createdAt: data.createdAt ? new Date(data.createdAt).toLocaleString() : new Date().toLocaleString(),
-              status: 'ACTIVE'
-            });
+            for (let v = versionCount; v >= 1; v--) {
+              const isLatest = v === versionCount;
+              histories.push({
+                version: v,
+                revision: isLatest ? data.revision : `V1-${v}`,
+                changeReason: isLatest ? `[개정] ${data.revision} 차수 개정 완료` : `[기안 등록] ${data.title} 최초 기안`,
+                author: isLatest ? '홍길동 수석연구원' : '시스템 사용자',
+                createdAt: isLatest && data.updatedAt ? new Date(data.updatedAt).toLocaleString() : (data.createdAt ? new Date(data.createdAt).toLocaleString() : new Date().toLocaleString()),
+                status: isLatest ? 'ACTIVE' : 'SUPERSEDED'
+              });
+            }
           }
           setHistoryList(histories);
         } else {
@@ -109,26 +116,51 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
   const handleSuccessRevision = (newDoc: DocumentResponse) => {
     setDoc(newDoc);
     const histories: RevisionHistoryItem[] = [];
+    const versionCount = Math.max(1, newDoc.version || 1);
+
     if (newDoc.auditLogs && newDoc.auditLogs.length > 0) {
-      newDoc.auditLogs.forEach((log, idx) => {
+      const revLogs = newDoc.auditLogs.filter(l => l.actionType && l.actionType.startsWith('REVISION_UP'));
+      for (let v = versionCount; v >= 1; v--) {
+        const isLatest = v === versionCount;
+        const logIdx = versionCount - v - 1;
+
+        let reasonText = '';
+        let logDate = null;
+
+        if (isLatest && revLogs.length > 0) {
+          reasonText = revLogs[0].reason ? revLogs[0].reason : `[개정] ${newDoc.revision} 차수 개정 완료`;
+          logDate = revLogs[0].createdAt;
+        } else if (logIdx >= 0 && logIdx < revLogs.length) {
+          reasonText = revLogs[logIdx].reason ? revLogs[logIdx].reason : `[개정] V1-${v} 차수 개정 완료`;
+          logDate = revLogs[logIdx].createdAt;
+        } else if (v === 1) {
+          reasonText = `[기안 등록] ${newDoc.title} (${newDoc.docNumber}) 최초 기안`;
+          logDate = newDoc.createdAt;
+        } else {
+          reasonText = `[개정] V1-${v} 차수 개정 완료`;
+        }
+
         histories.push({
-          version: Math.max(1, (newDoc.version || 1) - idx),
-          revision: idx === 0 ? newDoc.revision : `V1-${Math.max(1, (newDoc.version || 1) - idx)}`,
-          changeReason: log.reason || `[개정] ${log.actionType}`,
-          author: '홍길동 수석연구원',
-          createdAt: log.createdAt ? new Date(log.createdAt).toLocaleString() : new Date().toLocaleString(),
-          status: idx === 0 ? 'ACTIVE' : 'SUPERSEDED'
+          version: v,
+          revision: isLatest ? newDoc.revision : `V1-${v}`,
+          changeReason: reasonText,
+          author: isLatest ? '홍길동 수석연구원' : '시스템 사용자',
+          createdAt: logDate ? new Date(logDate).toLocaleString() : new Date().toLocaleString(),
+          status: isLatest ? 'ACTIVE' : 'SUPERSEDED'
         });
-      });
+      }
     } else {
-      histories.push({
-        version: newDoc.version,
-        revision: newDoc.revision,
-        changeReason: `[최신 개정] ${newDoc.revision} 차수 개정 완료`,
-        author: '홍길동 수석연구원',
-        createdAt: new Date().toLocaleString(),
-        status: 'ACTIVE'
-      });
+      for (let v = versionCount; v >= 1; v--) {
+        const isLatest = v === versionCount;
+        histories.push({
+          version: v,
+          revision: isLatest ? newDoc.revision : `V1-${v}`,
+          changeReason: isLatest ? `[개정] ${newDoc.revision} 차수 개정 완료` : `[기안 등록] ${newDoc.title} 최초 기안`,
+          author: isLatest ? '홍길동 수석연구원' : '시스템 사용자',
+          createdAt: new Date().toLocaleString(),
+          status: isLatest ? 'ACTIVE' : 'SUPERSEDED'
+        });
+      }
     }
     setHistoryList(histories);
   };
