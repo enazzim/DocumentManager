@@ -22,6 +22,15 @@ export interface DocumentCreateRequest {
   bomList: DrawingBomDto[];
 }
 
+export interface DocumentAuditLogDto {
+  auditLogId?: number;
+  documentId?: number;
+  actionType: string;
+  actorId?: number;
+  reason: string;
+  createdAt: string;
+}
+
 export interface DocumentResponse {
   documentId: number;
   docNumber: string;
@@ -39,6 +48,7 @@ export interface DocumentResponse {
   scale: string;
   presignedUploadUrl?: string;
   bomList: DrawingBomDto[];
+  auditLogs?: DocumentAuditLogDto[];
   createdAt: string;
   updatedAt: string;
 }

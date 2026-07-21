@@ -146,6 +146,18 @@ public class DocumentService {
             }
         }
 
+        List<DocumentAuditLog> auditLogs = auditLogRepository.findByDocumentIdOrderByCreatedAtDesc(doc.getDocumentId());
+        List<DocumentAuditLogDto> auditLogDtos = auditLogs.stream()
+                .map(a -> DocumentAuditLogDto.builder()
+                        .auditLogId(a.getAuditLogId())
+                        .documentId(a.getDocumentId())
+                        .actionType(a.getActionType())
+                        .actorId(a.getActorId())
+                        .reason(a.getReason())
+                        .createdAt(a.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
         return DocumentResponse.builder()
                 .documentId(doc.getDocumentId())
                 .docNumber(doc.getDocNumber())
@@ -163,6 +175,7 @@ public class DocumentService {
                 .scale(detail != null ? detail.getScale() : null)
                 .presignedUploadUrl(presignedUrl)
                 .bomList(bomDtos)
+                .auditLogs(auditLogDtos)
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
                 .build();
@@ -247,6 +260,16 @@ public class DocumentService {
         }
 
         documentRepository.save(document);
+
+        // 개정 사유 (Audit Log) DB 영구 기록
+        DocumentAuditLog auditLog = DocumentAuditLog.builder()
+                .documentId(documentId)
+                .actionType("REVISION_UP (" + newRevision + ")")
+                .actorId(document.getAuthorId() != null ? document.getAuthorId() : 1L)
+                .reason(changeReason)
+                .build();
+        auditLogRepository.save(auditLog);
+
         log.info("[차수 개정 완료] 문서 ID #{} (v{} - 차수: {}, 사유: {})", documentId, newVersion, newRevision, changeReason);
 
         String presignedUrl = "/api/v1/documents/" + document.getDocumentId() + "/file";

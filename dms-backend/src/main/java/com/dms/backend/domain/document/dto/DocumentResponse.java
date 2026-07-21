@@ -31,6 +31,7 @@ public class DocumentResponse {
     private String scale;
     private String presignedUploadUrl;
     private List<DrawingBomDto> bomList;
+    private List<DocumentAuditLogDto> auditLogs;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

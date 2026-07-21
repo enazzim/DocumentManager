@@ -42,11 +42,22 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
         if (data && data.docNumber) {
           setDoc(data);
           const histories: RevisionHistoryItem[] = [];
-          if (data.version && data.version > 1) {
+          if (data.auditLogs && data.auditLogs.length > 0) {
+            data.auditLogs.forEach((log, idx) => {
+              histories.push({
+                version: Math.max(1, (data.version || 1) - idx),
+                revision: idx === 0 ? data.revision : `V1-${Math.max(1, (data.version || 1) - idx)}`,
+                changeReason: log.reason || `[개정] ${log.actionType}`,
+                author: '홍길동 수석연구원',
+                createdAt: log.createdAt ? new Date(log.createdAt).toLocaleString() : new Date().toLocaleString(),
+                status: idx === 0 ? 'ACTIVE' : 'SUPERSEDED'
+              });
+            });
+          } else if (data.version && data.version > 1) {
             histories.push({
               version: data.version,
               revision: data.revision || `V1-${data.version}`,
-              changeReason: `[최신 개정] ${data.revision} 치수 개정 완료 (바이어 사양 변경 반영)`,
+              changeReason: `[최신 개정] ${data.revision} 개정 완료`,
               author: '홍길동 수석연구원',
               createdAt: data.updatedAt ? new Date(data.updatedAt).toLocaleString() : new Date().toLocaleString(),
               status: 'ACTIVE'
@@ -97,16 +108,29 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
 
   const handleSuccessRevision = (newDoc: DocumentResponse) => {
     setDoc(newDoc);
-    const newHistory: RevisionHistoryItem = {
-      version: newDoc.version,
-      revision: newDoc.revision,
-      changeReason: `[최신 개정] ${newDoc.revision} 차수 개정 완료 (바이어 사양 변경 반영)`,
-      author: '홍길동 수석연구원',
-      createdAt: new Date().toLocaleString(),
-      status: 'ACTIVE'
-    };
-    const updatedHistories = historyList.map(h => ({ ...h, status: 'SUPERSEDED' as const }));
-    setHistoryList([newHistory, ...updatedHistories]);
+    const histories: RevisionHistoryItem[] = [];
+    if (newDoc.auditLogs && newDoc.auditLogs.length > 0) {
+      newDoc.auditLogs.forEach((log, idx) => {
+        histories.push({
+          version: Math.max(1, (newDoc.version || 1) - idx),
+          revision: idx === 0 ? newDoc.revision : `V1-${Math.max(1, (newDoc.version || 1) - idx)}`,
+          changeReason: log.reason || `[개정] ${log.actionType}`,
+          author: '홍길동 수석연구원',
+          createdAt: log.createdAt ? new Date(log.createdAt).toLocaleString() : new Date().toLocaleString(),
+          status: idx === 0 ? 'ACTIVE' : 'SUPERSEDED'
+        });
+      });
+    } else {
+      histories.push({
+        version: newDoc.version,
+        revision: newDoc.revision,
+        changeReason: `[최신 개정] ${newDoc.revision} 차수 개정 완료`,
+        author: '홍길동 수석연구원',
+        createdAt: new Date().toLocaleString(),
+        status: 'ACTIVE'
+      });
+    }
+    setHistoryList(histories);
   };
 
   const handleOpenPdfFile = () => {
