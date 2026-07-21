@@ -76,6 +76,21 @@ public class DocumentController {
 
     @DeleteMapping("/{documentId}")
     public ApiResponse<Void> deleteDocument(@PathVariable Long documentId) {
+        log.info("REST Request to move document #{} to trash (soft delete)", documentId);
+        documentService.moveToTrash(documentId);
+        return ApiResponse.success(null);
+    }
+
+    @PostMapping("/{documentId}/restore")
+    public ApiResponse<Void> restoreDocument(@PathVariable Long documentId) {
+        log.info("REST Request to restore document #{} from trash", documentId);
+        documentService.restoreFromTrash(documentId);
+        return ApiResponse.success(null);
+    }
+
+    @DeleteMapping("/{documentId}/permanent")
+    public ApiResponse<Void> permanentDeleteDocument(@PathVariable Long documentId) {
+        log.info("REST Request to permanently delete document #{}", documentId);
         documentService.deleteDocument(documentId);
         return ApiResponse.success(null);
     }

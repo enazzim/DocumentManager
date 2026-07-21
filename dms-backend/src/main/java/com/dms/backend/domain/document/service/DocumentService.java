@@ -137,6 +137,7 @@ public class DocumentService {
                 .approvalStatus(doc.getApprovalStatus())
                 .lifecycleStatus(doc.getLifecycleStatus())
                 .fileStatus(doc.getFileStatus())
+                .isDeleted(doc.getIsDeleted() != null ? doc.getIsDeleted() : false)
                 .version(doc.getVersion())
                 .partNumber(detail != null ? detail.getPartNumber() : null)
                 .partName(detail != null ? detail.getPartName() : null)
@@ -151,7 +152,35 @@ public class DocumentService {
     }
 
     /**
-     * 도면 문서 및 연관 BOM/Detail 정보 안전 삭제 (폐기)
+     * 1. 소프트 삭제 (휴지통 이동)
+     */
+    @Transactional
+    public void moveToTrash(Long documentId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND, "존재하지 않는 도면입니다: " + documentId));
+
+        document.setIsDeleted(true);
+        document.setLifecycleStatus(LifecycleStatus.DELETED);
+        documentRepository.save(document);
+        log.info("[휴지통 이동] 문서 ID #{} (isDeleted=true)", documentId);
+    }
+
+    /**
+     * 2. 도면 복구 (정상 대장으로 복원)
+     */
+    @Transactional
+    public void restoreFromTrash(Long documentId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND, "존재하지 않는 도면입니다: " + documentId));
+
+        document.setIsDeleted(false);
+        document.setLifecycleStatus(LifecycleStatus.ACTIVE);
+        documentRepository.save(document);
+        log.info("[도면 복구] 문서 ID #{} (isDeleted=false)", documentId);
+    }
+
+    /**
+     * 3. 영구 삭제 (물리 삭제)
      */
     @Transactional
     public void deleteDocument(Long documentId) {
@@ -160,9 +189,9 @@ public class DocumentService {
             drawingBomRepository.deleteByDocument_DocumentId(documentId);
             drawingDetailRepository.deleteByDocument_DocumentId(documentId);
             documentRepository.delete(docOpt.get());
-            log.info("[도면 삭제] 문서 ID #{} 안전 폐기 완료", documentId);
+            log.info("[영구 삭제] 문서 ID #{} DB 물리 삭제 완료", documentId);
         } else {
-            log.warn("[도면 삭제] DB에 존재하지 않거나 이미 삭제 처리된 문서 ID #{}, 정상 성공 응답 반환", documentId);
+            log.warn("[영구 삭제] DB에 존재하지 않는 문서 ID #{}, 무시 완료", documentId);
         }
     }
 }

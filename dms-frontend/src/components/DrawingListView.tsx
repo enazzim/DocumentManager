@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { deleteDocumentApi, getDocumentApi } from '../api/documentApi';
+import { deleteDocumentApi, restoreDocumentApi, permanentDeleteDocumentApi } from '../api/documentApi';
 import type { DocumentResponse } from '../api/documentApi';
 
 interface DrawingListViewProps {
@@ -25,82 +25,83 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
   const [trashDocuments, setTrashDocuments] = useState<DocumentResponse[]>([]);
 
   // 백엔드 실시간 DB 목록 수신
-  useEffect(() => {
-    const fetchDocs = async () => {
-      try {
-        const response = await axios.get('/api/v1/documents');
-        const docs = response.data?.data || response.data || [];
-        if (Array.isArray(docs)) {
-          const actives = docs.filter((d: any) => !d.isDeleted);
-          const trashes = docs.filter((d: any) => d.isDeleted);
-          setDocuments(actives);
-          setTrashDocuments(trashes);
-        }
-      } catch (e) {
-        console.warn('DB 목록 수신 중 오류 또는 결과 없음:', e);
-        setDocuments([]);
-        setTrashDocuments([]);
+  const fetchDocs = async () => {
+    try {
+      const response = await axios.get('/api/v1/documents');
+      const docs = response.data?.data || response.data || [];
+      if (Array.isArray(docs)) {
+        const actives = docs.filter((d: any) => !d.isDeleted && d.lifecycleStatus !== 'DELETED');
+        const trashes = docs.filter((d: any) => d.isDeleted || d.lifecycleStatus === 'DELETED');
+        setDocuments(actives);
+        setTrashDocuments(trashes);
       }
-    };
+    } catch (e) {
+      console.warn('DB 목록 수신 중 오류 또는 결과 없음:', e);
+      setDocuments([]);
+      setTrashDocuments([]);
+    }
+  };
+
+  useEffect(() => {
     fetchDocs();
   }, []);
 
-  // 1단계: 휴지통으로 이동 (⚠️ 팝업 경고 알림 필수!)
-  const handleMoveToTrash = (docId: number, docNum: string) => {
+  // 1단계: 휴지통으로 이동 (소프트 삭제 - DB isDeleted=true)
+  const handleMoveToTrash = async (docId: number, docNum: string) => {
     const isConfirmed = window.confirm(
       `⚠️ [도면 삭제/휴지통 이동 경고]\n\n` +
       `도면 번호: ${docNum} (문서 ID: #${docId})\n` +
       `해당 도면을 휴지통 보관함으로 이동하시겠습니까?\n\n` +
-      `※ 휴지통 보관함에서 언제든 1초 만에 다시 원상 복구할 수 있습니다.`
+      `※ 휴지통 보관함에서 언제든 다시 원상 복구할 수 있습니다.`
     );
 
     if (isConfirmed) {
-      const targetDoc = documents.find((d) => d.documentId === docId);
-      if (!targetDoc) return;
-
-      // 즉시 렌더링 수량 및 배열 감축 반영!
-      setDocuments((prev) => prev.filter((d) => d.documentId !== docId));
-      setTrashDocuments((prev) => [{ ...targetDoc, fileStatus: 'ARCHIVED' }, ...prev]);
-
-      deleteDocumentApi(docId).catch((err) => console.log('소프트 삭제 API:', err));
-
-      alert(`[휴지통 이동 완료] 도면 [${docNum}] 이 휴지통 보관함으로 이동되었습니다.`);
+      try {
+        await deleteDocumentApi(docId);
+        await fetchDocs();
+        alert(`[휴지통 이동 완료] 도면 [${docNum}] 이 휴지통 보관함으로 이동되었습니다.`);
+      } catch (err: any) {
+        alert(`[오류] 휴지통 이동 처리 실패: ${err.message}`);
+      }
     }
   };
 
-  // 2단계: 휴지통에서 정상 도면 대장으로 원복 (복구)
-  const handleRestoreFromTrash = (docId: number, docNum: string) => {
+  // 2단계: 휴지통에서 정상 도면 대장으로 원복 (복구 - DB isDeleted=false)
+  const handleRestoreFromTrash = async (docId: number, docNum: string) => {
     const isConfirmed = window.confirm(
       `♻️ [도면 복구 확인]\n\n` +
       `휴지통에 보관된 도면 [${docNum}] 을 다시 정상 도면 대장으로 완전 복구하시겠습니까?`
     );
 
     if (isConfirmed) {
-      const targetDoc = trashDocuments.find((d) => d.documentId === docId);
-      if (!targetDoc) return;
-
-      setTrashDocuments((prev) => prev.filter((d) => d.documentId !== docId));
-      setDocuments((prev) => [{ ...targetDoc, fileStatus: 'ACTIVE' }, ...prev]);
-
-      alert(`[도면 복구 완료] 도면 [${docNum}] 이 정상 도면 대장으로 완전 복구되었습니다.`);
+      try {
+        await restoreDocumentApi(docId);
+        await fetchDocs();
+        alert(`[도면 복구 완료] 도면 [${docNum}] 이 정상 도면 대장으로 완전 복구되었습니다.`);
+      } catch (err: any) {
+        alert(`[오류] 도면 복구 실패: ${err.message}`);
+      }
     }
   };
 
-  // 3단계: 휴지통에서 영구 삭제 (100% 즉시 동작 보장!)
-  const handlePermanentDelete = (docId: number, docNum: string) => {
+  // 3단계: 휴지통에서 영구 삭제 (DB 물리 삭제)
+  const handlePermanentDelete = async (docId: number, docNum: string) => {
     const isConfirmed = window.confirm(
-      `🚨 [🔥 영구 삭제 1차 경고]\n\n` +
+      `🚨 [🔥 영구 삭제 경고]\n\n` +
       `도면 번호: ${docNum} (문서 ID: #${docId})\n\n` +
-      `경고: 해당 도면 및 첨부 파일이 DB와 S3 저장소에서 영구히 완전히 물리 삭제됩니다.\n` +
-      `영구 삭제 후에는 절대로 다시 복구할 수 없습니다!\n\n` +
+      `경고: 해당 도면 및 첨부 파일이 DB 및 물리 저장소에서 완전히 삭제됩니다.\n` +
+      `영구 삭제 후에는 다시 복구할 수 없습니다!\n\n` +
       `정말로 영구 삭제하시겠습니까?`
     );
 
     if (isConfirmed) {
-      // 0.01초 즉시 화면 리스트에서 완전 삭제 반영!
-      setTrashDocuments((prev) => prev.filter((d) => d.documentId !== docId));
-      deleteDocumentApi(docId).catch((err) => console.log('영구 삭제 API:', err));
-      alert(`[영구 삭제 완료] 도면 [${docNum}] (문서 ID: #${docId}) 이 DB 및 S3에서 영구 물리 삭제되었습니다.`);
+      try {
+        await permanentDeleteDocumentApi(docId);
+        await fetchDocs();
+        alert(`[영구 삭제 완료] 도면 [${docNum}] (문서 ID: #${docId}) 이 DB에서 영구 삭제되었습니다.`);
+      } catch (err: any) {
+        alert(`[오류] 영구 삭제 실패: ${err.message}`);
+      }
     }
   };
 

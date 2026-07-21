@@ -22,6 +22,7 @@ public class DocumentResponse {
     private ApprovalStatus approvalStatus;
     private LifecycleStatus lifecycleStatus;
     private FileStatus fileStatus;
+    private Boolean isDeleted;
     private Integer version;
     private String partNumber;
     private String partName;

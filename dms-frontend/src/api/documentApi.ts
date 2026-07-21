@@ -30,6 +30,7 @@ export interface DocumentResponse {
   approvalStatus: string;
   lifecycleStatus: string;
   fileStatus: string;
+  isDeleted?: boolean;
   version: number;
   partNumber?: string;
   partName: string;
@@ -54,8 +55,25 @@ export const getDocumentApi = async (documentId: number): Promise<DocumentRespon
   return response.data?.data || response.data;
 };
 
+/**
+ * 1. 휴지통 이동 (소프트 삭제)
+ */
 export const deleteDocumentApi = async (documentId: number): Promise<void> => {
   await axios.delete(`${API_BASE_URL}/${documentId}`);
+};
+
+/**
+ * 2. 도면 복구 (정상 대장으로 이동)
+ */
+export const restoreDocumentApi = async (documentId: number): Promise<void> => {
+  await axios.post(`${API_BASE_URL}/${documentId}/restore`);
+};
+
+/**
+ * 3. 영구 물리 삭제
+ */
+export const permanentDeleteDocumentApi = async (documentId: number): Promise<void> => {
+  await axios.delete(`${API_BASE_URL}/${documentId}/permanent`);
 };
 
 /**
