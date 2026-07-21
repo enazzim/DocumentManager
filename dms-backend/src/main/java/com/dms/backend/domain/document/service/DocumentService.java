@@ -27,13 +27,12 @@ public class DocumentService {
 
     @Transactional
     public DocumentResponse createDocument(DocumentCreateRequest request) {
-        log.info("Creating new document: docNumber={}, docType={}", request.getDocNumber(), request.getDocType());
+        log.info("Creating or updating document: docNumber={}, docType={}", request.getDocNumber(), request.getDocType());
 
-        if (documentRepository.findByDocNumber(request.getDocNumber()).isPresent()) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE, "이미 존재하는 문서번호입니다: " + request.getDocNumber());
-        }
+        String resolvedPartNumber = (request.getPartNumber() != null && !request.getPartNumber().trim().isEmpty())
+                ? request.getPartNumber().trim()
+                : "미발급 (시제품 샘플)";
 
-        // 1. 도면 대표 엔티티 생성
         ApprovalStatus initialApproval = (request.getDocType() == DocType.EXTERNAL) 
                 ? ApprovalStatus.APPROVED 
                 : ApprovalStatus.DRAFT;
@@ -42,31 +41,35 @@ public class DocumentService {
                 ? LifecycleStatus.ACTIVE
                 : LifecycleStatus.DRAFT;
 
-        Document document = Document.builder()
-                .docNumber(request.getDocNumber())
-                .title(request.getTitle())
-                .docType(request.getDocType())
-                .approvalStatus(initialApproval)
-                .lifecycleStatus(initialLifecycle)
-                .fileStatus(FileStatus.STAGED)
-                .authorId(request.getAuthorId() != null ? request.getAuthorId() : 1L)
-                .version(1)
-                .build();
+        Document document = documentRepository.findByDocNumber(request.getDocNumber())
+                .orElseGet(() -> Document.builder()
+                        .docNumber(request.getDocNumber())
+                        .authorId(request.getAuthorId() != null ? request.getAuthorId() : 1L)
+                        .version(1)
+                        .build());
+
+        document.setTitle(request.getTitle());
+        document.setDocType(request.getDocType());
+        document.setApprovalStatus(initialApproval);
+        document.setLifecycleStatus(initialLifecycle);
+        document.setFileStatus(FileStatus.STAGED);
 
         Document savedDoc = documentRepository.save(document);
 
-        // 2. 도면 세부 정보 생성
-        DrawingDetail drawingDetail = DrawingDetail.builder()
-                .document(savedDoc)
-                .partNumber(request.getPartNumber())
-                .partName(request.getPartName())
-                .revision(request.getRevision())
-                .cadType(request.getCadType())
-                .scale(request.getScale())
-                .build();
+        // 2. 도면 세부 정보 생성 또는 업데이트
+        DrawingDetail drawingDetail = drawingDetailRepository.findByDocument_DocumentId(savedDoc.getDocumentId())
+                .orElseGet(() -> DrawingDetail.builder().document(savedDoc).build());
+
+        drawingDetail.setPartNumber(resolvedPartNumber);
+        drawingDetail.setPartName(request.getPartName() != null ? request.getPartName() : request.getTitle());
+        drawingDetail.setRevision(request.getRevision() != null ? request.getRevision() : "V1-1");
+        drawingDetail.setCadType(request.getCadType());
+        drawingDetail.setScale(request.getScale());
+
         drawingDetailRepository.save(drawingDetail);
 
-        // 3. 외부 BOM 목록 저장
+        // 3. 외부 BOM 목록 저장 (기존 BOM 삭제 후 재등록)
+        drawingBomRepository.deleteByDocument_DocumentId(savedDoc.getDocumentId());
         if (request.getBomList() != null && !request.getBomList().isEmpty()) {
             List<DrawingBom> boms = request.getBomList().stream()
                     .map(dto -> DrawingBom.builder()
@@ -74,7 +77,7 @@ public class DocumentService {
                             .externalItemId(dto.getExternalItemId())
                             .itemCode(dto.getItemCode())
                             .itemName(dto.getItemName())
-                            .itemSource(dto.getItemSource() != null ? dto.getItemSource() : "ERP")
+                            .itemSource(dto.getItemSource() != null ? dto.getItemSource() : "SmartManager")
                             .quantity(dto.getQuantity())
                             .unit(dto.getUnit())
                             .build())
@@ -87,7 +90,7 @@ public class DocumentService {
                 .documentId(savedDoc.getDocumentId())
                 .actionType("CREATE")
                 .actorId(savedDoc.getAuthorId())
-                .reason("신규 도면 등록 (" + request.getDocType() + ")")
+                .reason("도면 기안/수정 (" + request.getDocType() + ")")
                 .build();
         auditLogRepository.save(auditLog);
 
@@ -102,6 +105,15 @@ public class DocumentService {
                 .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND, "존재하지 않는 도면입니다: " + documentId));
         DrawingDetail detail = drawingDetailRepository.findByDocument_DocumentId(documentId).orElse(null);
         return convertToResponse(document, detail, null);
+    }
+
+    public List<DocumentResponse> getAllDocuments() {
+        return documentRepository.findAll().stream()
+                .map(doc -> {
+                    DrawingDetail detail = drawingDetailRepository.findByDocument_DocumentId(doc.getDocumentId()).orElse(null);
+                    return convertToResponse(doc, detail, null);
+                })
+                .collect(Collectors.toList());
     }
 
     private DocumentResponse convertToResponse(Document doc, DrawingDetail detail, String presignedUrl) {

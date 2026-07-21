@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -29,6 +30,12 @@ public class DocumentController {
 
     // 📁 백엔드 실제 물리 저장 디렉터리 경로 (프로젝트 루트 / uploads / drawings)
     private static final String UPLOAD_DIR = "uploads/drawings/";
+
+    @GetMapping
+    public ApiResponse<List<DocumentResponse>> getAllDocuments() {
+        log.info("REST Request to get all documents");
+        return ApiResponse.success(documentService.getAllDocuments());
+    }
 
     @PostMapping
     public ApiResponse<DocumentResponse> createDocument(@RequestBody DocumentCreateRequest request) {

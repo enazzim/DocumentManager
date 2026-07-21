@@ -22,7 +22,7 @@ public class DrawingDetail {
     @JoinColumn(name = "document_id", nullable = false, unique = true)
     private Document document;
 
-    @Column(name = "part_number", nullable = false, length = 100)
+    @Column(name = "part_number", length = 100)
     private String partNumber;
 
     @Column(name = "part_name", nullable = false, length = 150)
