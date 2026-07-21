@@ -4,12 +4,22 @@
 *.swp
 *.tmp
 *.log
-node_modules/
-dist/
-target/
 .DS_Store
+Thumbs.db
+
+# Backend (dms-backend)
+dms-backend/.gradle/
+dms-backend/build/
+dms-backend/bin/
+dms-backend/out/
+
+# Frontend (dms-frontend)
+dms-frontend/node_modules/
+dms-frontend/dist/
+dms-frontend/.vite/
+dms-frontend/dist-ssr/
+*.local
 
 # OS generated files
-Thumbs.db
 ehthumbs.db
 Desktop.ini
