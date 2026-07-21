@@ -56,7 +56,8 @@ export const DrawingUploadForm: React.FC<DrawingUploadFormProps> = ({ onSuccessN
       const response = await axios.get('/api/v1/documents');
       const docs = response.data?.data || response.data || [];
       if (Array.isArray(docs)) {
-        const mapped: MiniDocRecord[] = docs.map((d: any) => ({
+        const activeDocs = docs.filter((d: any) => !d.isDeleted && d.lifecycleStatus !== 'DELETED');
+        const mapped: MiniDocRecord[] = activeDocs.map((d: any) => ({
           documentId: d.documentId || d.id,
           docNumber: d.docNumber,
           title: d.title,
