@@ -46,11 +46,26 @@ const API_BASE_URL = '/api/v1/documents';
 
 export const createDocumentApi = async (request: DocumentCreateRequest): Promise<DocumentResponse> => {
   const response = await axios.post(API_BASE_URL, request);
-  // 백엔드 ApiResponse wrapper 구조(response.data.data) 및 직접 응답 모두 지원 안전하게 파싱
   return response.data?.data || response.data;
 };
 
 export const getDocumentApi = async (documentId: number): Promise<DocumentResponse> => {
   const response = await axios.get(`${API_BASE_URL}/${documentId}`);
+  return response.data?.data || response.data;
+};
+
+export const deleteDocumentApi = async (documentId: number): Promise<void> => {
+  await axios.delete(`${API_BASE_URL}/${documentId}`);
+};
+
+/**
+ * SSO 토큰 기반 SmartManager REST API 연동 자재 마스터 검색
+ */
+export const searchSmartManagerBomsApi = async (keyword: string): Promise<DrawingBomDto[]> => {
+  const ssoToken = 'MOCK_SSO_BEARER_TOKEN_2026';
+  const response = await axios.get('/api/v1/external/smartmanager/boms', {
+    params: { keyword },
+    headers: { Authorization: `Bearer ${ssoToken}` }
+  });
   return response.data?.data || response.data;
 };

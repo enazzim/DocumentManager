@@ -137,4 +137,18 @@ public class DocumentService {
                 .updatedAt(doc.getUpdatedAt())
                 .build();
     }
+
+    /**
+     * 도면 문서 및 연관 BOM/Detail 정보 안전 삭제 (폐기)
+     */
+    @Transactional
+    public void deleteDocument(Long documentId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
+
+        drawingBomRepository.deleteByDocument_DocumentId(documentId);
+        drawingDetailRepository.deleteByDocument_DocumentId(documentId);
+        documentRepository.delete(document);
+        log.info("[도면 삭제] 문서 ID #{} 안전 폐기 완료", documentId);
+    }
 }

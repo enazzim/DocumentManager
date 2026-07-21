@@ -1,0 +1,13 @@
+# AWS S3 클라우드 연동 환경 설정 (프로덕션 배포 시 active profile: aws 적용)
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID:YOUR_AWS_ACCESS_KEY_HERE}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:YOUR_AWS_SECRET_KEY_HERE}
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
+    s3:
+      bucket: dms-enterprise-drawing-bucket
+      presigned-url-expiration-minutes: 15

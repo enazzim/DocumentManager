@@ -3,14 +3,26 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { DrawingUploadForm } from './components/DrawingUploadForm';
 import { DrawingDetailView } from './components/DrawingDetailView';
+import { DrawingListView } from './components/DrawingListView';
 
 function App() {
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [selectedDocId, setSelectedDocId] = useState<number>(1);
+  const [editingDocId, setEditingDocId] = useState<number | null>(null);
 
   const handleNavigateToDetail = (docId: number) => {
     setSelectedDocId(docId);
     setActiveMenu('drawing-detail');
+  };
+
+  const handleNavigateToUpload = () => {
+    setEditingDocId(null);
+    setActiveMenu('drawing-upload');
+  };
+
+  const handleEditDocument = (docId: number) => {
+    setEditingDocId(docId);
+    setActiveMenu('drawing-upload');
   };
 
   const containerStyle: React.CSSProperties = {
@@ -61,8 +73,21 @@ function App() {
             <p style={{ color: '#64748b', marginTop: '6px' }}>등록된 일반 문서를 통합 조회합니다.</p>
           </div>
         );
+      case 'drawing-list':
+        return (
+          <DrawingListView
+            onSelectDocument={handleNavigateToDetail}
+            onNavigateUpload={handleNavigateToUpload}
+            onEditDocument={handleEditDocument}
+          />
+        );
       case 'drawing-upload':
-        return <DrawingUploadForm onSuccessNavigate={handleNavigateToDetail} />;
+        return (
+          <DrawingUploadForm
+            onSuccessNavigate={handleNavigateToDetail}
+            editDocumentId={editingDocId}
+          />
+        );
       case 'drawing-detail':
         return <DrawingDetailView documentId={selectedDocId} />;
       case 'sse-monitor':

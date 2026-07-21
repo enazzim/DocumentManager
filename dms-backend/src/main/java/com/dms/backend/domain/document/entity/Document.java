@@ -61,6 +61,10 @@ public class Document {
     @Column(name = "version", nullable = false)
     private Integer version = 1;
 
+    @Builder.Default
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

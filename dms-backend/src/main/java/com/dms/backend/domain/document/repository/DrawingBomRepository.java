@@ -9,6 +9,7 @@ import java.util.List;
 @Repository
 public interface DrawingBomRepository extends JpaRepository<DrawingBom, Long> {
     List<DrawingBom> findByDocument_DocumentId(Long documentId);
+    void deleteByDocument_DocumentId(Long documentId);
     List<DrawingBom> findByItemCode(String itemCode);
     List<DrawingBom> findByExternalItemIdAndItemSource(String externalItemId, String itemSource);
 }

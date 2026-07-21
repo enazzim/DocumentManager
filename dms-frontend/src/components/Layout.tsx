@@ -32,8 +32,8 @@ export const Layout: React.FC<LayoutProps> = ({ activeMenu, onSelectMenu, childr
     {
       category: '도면 관리',
       items: [
+        { id: 'drawing-list', label: '도면 통합 대장 조회 (전체 목록)', icon: '📋' },
         { id: 'drawing-upload', label: '도면 기안 & 외부 BOM 등록', icon: '📝' },
-        { id: 'drawing-detail', label: '도면 상세 & BOM 뷰어', icon: '🔍' },
       ],
     },
     {
