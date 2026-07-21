@@ -1,6 +1,7 @@
 package com.dms.backend.domain.document.dto;
 
 import com.dms.backend.domain.document.enums.DocType;
+import com.dms.backend.domain.document.enums.LifecycleStatus;
 import lombok.*;
 
 import java.util.List;
@@ -14,6 +15,7 @@ public class DocumentCreateRequest {
     private String docNumber;
     private String title;
     private DocType docType;
+    private LifecycleStatus lifecycleStatus;
     private Long authorId;
     
     // 도면 특화 정보

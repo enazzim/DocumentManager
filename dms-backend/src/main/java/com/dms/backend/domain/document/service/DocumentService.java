@@ -37,9 +37,16 @@ public class DocumentService {
                 ? ApprovalStatus.APPROVED 
                 : ApprovalStatus.DRAFT;
         
-        LifecycleStatus initialLifecycle = (request.getDocType() == DocType.EXTERNAL)
-                ? LifecycleStatus.ACTIVE
-                : LifecycleStatus.DRAFT;
+        LifecycleStatus initialLifecycle;
+        if (request.getLifecycleStatus() != null) {
+            initialLifecycle = request.getLifecycleStatus();
+        } else if (request.getTitle() != null && request.getTitle().contains("[개발/시제품]")) {
+            initialLifecycle = LifecycleStatus.DEVELOPMENT;
+        } else if (request.getTitle() != null && request.getTitle().contains("[양산확정]")) {
+            initialLifecycle = LifecycleStatus.MASS_PRODUCTION;
+        } else {
+            initialLifecycle = LifecycleStatus.DEVELOPMENT;
+        }
 
         Document document = documentRepository.findByDocNumber(request.getDocNumber())
                 .orElseGet(() -> Document.builder()
@@ -129,13 +136,22 @@ public class DocumentService {
                         .build())
                 .collect(Collectors.toList());
 
+        LifecycleStatus resolvedLifecycle = doc.getLifecycleStatus();
+        if (resolvedLifecycle == LifecycleStatus.ACTIVE || resolvedLifecycle == null) {
+            if (doc.getTitle() != null && doc.getTitle().contains("[개발/시제품]")) {
+                resolvedLifecycle = LifecycleStatus.DEVELOPMENT;
+            } else if (doc.getTitle() != null && doc.getTitle().contains("[양산확정]")) {
+                resolvedLifecycle = LifecycleStatus.MASS_PRODUCTION;
+            }
+        }
+
         return DocumentResponse.builder()
                 .documentId(doc.getDocumentId())
                 .docNumber(doc.getDocNumber())
                 .title(doc.getTitle())
                 .docType(doc.getDocType())
                 .approvalStatus(doc.getApprovalStatus())
-                .lifecycleStatus(doc.getLifecycleStatus())
+                .lifecycleStatus(resolvedLifecycle)
                 .fileStatus(doc.getFileStatus())
                 .isDeleted(doc.getIsDeleted() != null ? doc.getIsDeleted() : false)
                 .version(doc.getVersion())
@@ -174,9 +190,15 @@ public class DocumentService {
                 .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND, "존재하지 않는 도면입니다: " + documentId));
 
         document.setIsDeleted(false);
-        document.setLifecycleStatus(LifecycleStatus.ACTIVE);
+        if (document.getTitle() != null && document.getTitle().contains("[개발/시제품]")) {
+            document.setLifecycleStatus(LifecycleStatus.DEVELOPMENT);
+        } else if (document.getTitle() != null && document.getTitle().contains("[양산확정]")) {
+            document.setLifecycleStatus(LifecycleStatus.MASS_PRODUCTION);
+        } else {
+            document.setLifecycleStatus(LifecycleStatus.DEVELOPMENT);
+        }
         documentRepository.save(document);
-        log.info("[도면 복구] 문서 ID #{} (isDeleted=false)", documentId);
+        log.info("[도면 복구] 문서 ID #{} (isDeleted=false, status={})", documentId, document.getLifecycleStatus());
     }
 
     /**

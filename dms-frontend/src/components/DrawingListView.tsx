@@ -231,7 +231,7 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
                   <td style={{ padding: '14px', fontWeight: '700', color: '#2563eb' }}>{doc.docNumber}</td>
                   <td style={{ padding: '14px', fontWeight: '600', color: '#0f172a' }}>{doc.title}</td>
                   <td style={{ padding: '14px' }}>
-                    {doc.lifecycleStatus === 'DEVELOPMENT' ? (
+                    {doc.lifecycleStatus === 'DEVELOPMENT' || doc.title?.includes('[개발/시제품]') ? (
                       <span style={badgeStyle('#fef3c7', '#b45309')}>🧪 개발/시제품</span>
                     ) : (
                       <span style={badgeStyle('#dcfce7', '#15803d')}>🏭 양산 확정</span>
