@@ -12,6 +12,7 @@ dms-backend/.gradle/
 dms-backend/build/
 dms-backend/bin/
 dms-backend/out/
+dms-backend/uploads/
 
 # Frontend (dms-frontend)
 dms-frontend/node_modules/
