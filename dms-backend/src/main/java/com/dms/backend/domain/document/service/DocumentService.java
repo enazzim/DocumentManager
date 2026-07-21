@@ -62,6 +62,7 @@ public class DocumentService {
         document.setApprovalStatus(initialApproval);
         document.setLifecycleStatus(initialLifecycle);
         document.setFileStatus(FileStatus.STAGED);
+        document.setIsDeleted(false);
 
         Document savedDoc = documentRepository.save(document);
 
