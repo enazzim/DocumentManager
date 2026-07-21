@@ -376,15 +376,31 @@ export const DrawingUploadForm: React.FC<DrawingUploadFormProps> = ({ onSuccessN
         {/* 3. 기본 문서 정보 */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
           <div>
-            <label style={labelStyle}>거래처 수신 도면 번호 *</label>
+            <label style={labelStyle}>
+              거래처 수신 도면 번호 * {editDocumentId && <span style={{ fontSize: '11.5px', color: '#64748b', fontWeight: '600', marginLeft: '6px' }}>🔒 [수정 불가 고유 식별자]</span>}
+            </label>
             <input
               type="text"
               required
+              disabled={!!editDocumentId}
+              readOnly={!!editDocumentId}
               placeholder="예: DWG-2026-HYUNDAI-V1"
               value={docNumber}
               onChange={(e) => setDocNumber(e.target.value)}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                backgroundColor: editDocumentId ? '#f1f5f9' : '#ffffff',
+                color: editDocumentId ? '#64748b' : '#0f172a',
+                cursor: editDocumentId ? 'not-allowed' : 'text',
+                fontWeight: editDocumentId ? '700' : 'normal',
+                border: editDocumentId ? '1px solid #cbd5e1' : inputStyle.border
+              }}
             />
+            {editDocumentId && (
+              <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>
+                🔒 도면 번호는 데이터 무결성을 위한 고유 키이므로 기존 수정 모드에서는 변경이 불가능합니다.
+              </div>
+            )}
           </div>
           <div>
             <label style={labelStyle}>도면 제목 (부품명) *</label>
