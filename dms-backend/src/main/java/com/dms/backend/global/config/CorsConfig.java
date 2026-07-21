@@ -15,11 +15,10 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // 허용할 프론트엔드 Origin 설정 (로컬 Vite 개발서버 & EC2/운영 도메인)
+        // 허용할 프론트엔드 Origin 패턴 설정 (로컬 모든 포트 와일드카드 * 수용)
         configuration.setAllowedOriginPatterns(List.of(
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "http://127.0.0.1:5173"
+            "http://localhost:*",
+            "http://127.0.0.1:*"
         ));
         
         // 허용할 HTTP 메서드
