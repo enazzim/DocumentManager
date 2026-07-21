@@ -216,4 +216,39 @@ public class DocumentService {
             log.warn("[영구 삭제] DB에 존재하지 않는 문서 ID #{}, 무시 완료", documentId);
         }
     }
+
+    /**
+     * 4. 도면 차수 개정 (Revision Up)
+     */
+    @Transactional
+    public DocumentResponse revisionUpDocument(Long documentId, String newRevision, String changeReason) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND, "존재하지 않는 도면입니다: " + documentId));
+
+        int newVersion = (document.getVersion() != null ? document.getVersion() : 1) + 1;
+        document.setVersion(newVersion);
+        document.setUpdatedAt(LocalDateTime.now());
+
+        DrawingDetail detail = drawingDetailRepository.findByDocument_DocumentId(documentId).orElse(null);
+        if (detail != null) {
+            detail.setRevision(newRevision);
+            drawingDetailRepository.save(detail);
+        } else {
+            detail = DrawingDetail.builder()
+                    .document(document)
+                    .revision(newRevision)
+                    .partName(document.getTitle())
+                    .partNumber("미발급 (시제품)")
+                    .cadType("PDF")
+                    .scale("1:1")
+                    .build();
+            drawingDetailRepository.save(detail);
+        }
+
+        documentRepository.save(document);
+        log.info("[차수 개정 완료] 문서 ID #{} (v{} - 차수: {}, 사유: {})", documentId, newVersion, newRevision, changeReason);
+
+        String presignedUrl = "/api/v1/documents/" + document.getDocumentId() + "/file";
+        return convertToResponse(document, detail, presignedUrl);
+    }
 }

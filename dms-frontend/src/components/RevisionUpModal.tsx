@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { revisionUpDocumentApi } from '../api/documentApi';
 import type { DocumentResponse } from '../api/documentApi';
 
 interface RevisionUpModalProps {
@@ -13,6 +14,7 @@ export const RevisionUpModal: React.FC<RevisionUpModalProps> = ({ isOpen, doc, o
   const [changeReason, setChangeReason] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen || !doc) return null;
 
@@ -56,7 +58,7 @@ export const RevisionUpModal: React.FC<RevisionUpModalProps> = ({ isOpen, doc, o
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!changeReason.trim()) {
@@ -69,17 +71,22 @@ export const RevisionUpModal: React.FC<RevisionUpModalProps> = ({ isOpen, doc, o
       return;
     }
 
-    const updatedDoc: DocumentResponse = {
-      ...doc,
-      version: doc.version + 1,
-      revision: newRevision,
-      title: `${doc.title.replace(/\(개정:.*?\)/, '')} (개정: ${newRevision})`,
-      updatedAt: new Date().toISOString()
-    };
-
-    alert(`[도면 개정 완료] 도면 [${doc.docNumber}] 이 ${doc.revision} ➔ ${newRevision} 차수로 성공적으로 개정 등록되었습니다!\n(첨부 파일: ${selectedFile.name})\n구버전(${doc.revision})은 이력 보관함으로 자동 보존됩니다.`);
-    onSuccessRevision(updatedDoc);
-    onClose();
+    try {
+      setIsSubmitting(true);
+      const updatedDoc = await revisionUpDocumentApi(
+        doc.documentId,
+        newRevision,
+        changeReason,
+        selectedFile
+      );
+      alert(`[도면 개정 DB 저장 완료] 도면 [${doc.docNumber}] 이 ${doc.revision} ➔ ${newRevision} 차수로 성공적으로 백엔드 DB 및 물리 저장소에 개정 저장되었습니다!\n(첨부 파일: ${selectedFile.name})\n구버전(${doc.revision})은 이력 보관함으로 자동 보존됩니다.`);
+      onSuccessRevision(updatedDoc);
+      onClose();
+    } catch (err: any) {
+      alert(`[오류] 차수 개정 백엔드 저장 실패: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -185,9 +192,10 @@ export const RevisionUpModal: React.FC<RevisionUpModalProps> = ({ isOpen, doc, o
             </button>
             <button
               type="submit"
-              style={{ backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '700', fontSize: '13.5px', cursor: 'pointer' }}
+              disabled={isSubmitting}
+              style={{ backgroundColor: isSubmitting ? '#94a3b8' : '#2563eb', color: '#ffffff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '700', fontSize: '13.5px', cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
             >
-              🔄 {newRevision} 차수 개정 완료 & 이력 저장
+              {isSubmitting ? '⏳ DB 및 도면 개정 저장 중...' : `🔄 ${newRevision} 차수 개정 완료 & 이력 저장`}
             </button>
           </div>
         </form>

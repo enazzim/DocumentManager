@@ -96,6 +96,42 @@ public class DocumentController {
     }
 
     /**
+     * 🔄 도면 차수 개정 (Revision Up) 및 파일 교체 API
+     */
+    @PostMapping("/{documentId}/revision")
+    public ApiResponse<DocumentResponse> revisionUpDocument(
+            @PathVariable Long documentId,
+            @RequestParam("newRevision") String newRevision,
+            @RequestParam("changeReason") String changeReason,
+            @RequestParam(value = "file", required = false) MultipartFile file) throws IOException {
+
+        log.info("REST Request to Revision Up document #{}: newRevision={}, changeReason={}", documentId, newRevision, changeReason);
+
+        if (file != null && !file.isEmpty()) {
+            Path uploadPath = Paths.get(UPLOAD_DIR);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            File folder = uploadPath.toFile();
+            File[] oldFiles = folder.listFiles((dir, name) -> name.startsWith(documentId + "_"));
+            if (oldFiles != null) {
+                for (File f : oldFiles) {
+                    f.delete();
+                }
+            }
+
+            String targetFileName = documentId + "_" + file.getOriginalFilename();
+            Path targetPath = uploadPath.resolve(targetFileName);
+            Files.copy(file.getInputStream(), targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            log.info("Revision file updated on disk: {}", targetPath.toAbsolutePath());
+        }
+
+        DocumentResponse response = documentService.revisionUpDocument(documentId, newRevision, changeReason);
+        return ApiResponse.success(response);
+    }
+
+    /**
      * 📄 백엔드 로컬 물리 저장소(uploads/drawings/)에 저장된 실제 도면 파일 서빙
      */
     @GetMapping("/{documentId}/file")

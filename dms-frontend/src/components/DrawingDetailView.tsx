@@ -41,16 +41,37 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
         const data = await getDocumentApi(documentId);
         if (data && data.docNumber) {
           setDoc(data);
-          setHistoryList([
-            {
-              version: data.version || 1,
-              revision: data.revision || 'V1',
+          const histories: RevisionHistoryItem[] = [];
+          if (data.version && data.version > 1) {
+            histories.push({
+              version: data.version,
+              revision: data.revision || `V1-${data.version}`,
+              changeReason: `[최신 개정] ${data.revision} 치수 개정 완료 (바이어 사양 변경 반영)`,
+              author: '홍길동 수석연구원',
+              createdAt: data.updatedAt ? new Date(data.updatedAt).toLocaleString() : new Date().toLocaleString(),
+              status: 'ACTIVE'
+            });
+            for (let v = data.version - 1; v >= 1; v--) {
+              histories.push({
+                version: v,
+                revision: `V1-${v}`,
+                changeReason: `[기안 등록] ${data.title} (${data.docNumber}) 최초 기안`,
+                author: '시스템 사용자',
+                createdAt: data.createdAt ? new Date(data.createdAt).toLocaleString() : new Date().toLocaleString(),
+                status: 'SUPERSEDED'
+              });
+            }
+          } else {
+            histories.push({
+              version: 1,
+              revision: data.revision || 'V1-1',
               changeReason: `[기안 등록] ${data.title} (${data.docNumber}) 등록 완료`,
               author: '시스템 사용자',
               createdAt: data.createdAt ? new Date(data.createdAt).toLocaleString() : new Date().toLocaleString(),
               status: 'ACTIVE'
-            }
-          ]);
+            });
+          }
+          setHistoryList(histories);
         } else {
           setDoc(null);
         }

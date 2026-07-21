@@ -77,6 +77,28 @@ export const permanentDeleteDocumentApi = async (documentId: number): Promise<vo
 };
 
 /**
+ * 4. 도면 차수 개정 (Revision Up) 및 파일 교체 API
+ */
+export const revisionUpDocumentApi = async (
+  documentId: number,
+  newRevision: string,
+  changeReason: string,
+  file?: File | null
+): Promise<DocumentResponse> => {
+  const formData = new FormData();
+  formData.append('newRevision', newRevision);
+  formData.append('changeReason', changeReason);
+  if (file) {
+    formData.append('file', file);
+  }
+
+  const response = await axios.post(`${API_BASE_URL}/${documentId}/revision`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data?.data || response.data;
+};
+
+/**
  * SSO 토큰 기반 SmartManager REST API 연동 자재 마스터 검색
  */
 export const searchSmartManagerBomsApi = async (keyword: string): Promise<DrawingBomDto[]> => {
