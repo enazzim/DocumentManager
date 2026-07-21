@@ -148,12 +148,14 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
     setHistoryList(histories);
   };
 
-  const handleOpenPdfFile = () => {
+  const handleOpenPdfFile = (revision?: string) => {
     if (!hasFileOnServer) {
       alert('해당 도면에는 백엔드/S3 저장소에 등록 보관된 파일이 없습니다.');
       return;
     }
-    const fileApiUrl = `/api/v1/documents/${doc?.documentId || 811}/file`;
+    const fileApiUrl = revision
+      ? `/api/v1/documents/${doc?.documentId || 811}/file?revision=${encodeURIComponent(revision)}`
+      : `/api/v1/documents/${doc?.documentId || 811}/file`;
     window.open(fileApiUrl, '_blank');
   };
 
@@ -186,7 +188,7 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
   });
 
   return (
-    <div style={{ width: '100%', padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
       {/* 도면 개정 모달 */}
       <RevisionUpModal
         isOpen={isRevisionModalOpen}
@@ -195,8 +197,8 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
         onSuccessRevision={handleSuccessRevision}
       />
 
-      {/* 헤더 바 */}
-      <div style={{ borderBottom: '2px solid #2563eb', paddingBottom: '16px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* 헤더 및 액션 버튼 구역 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
@@ -238,10 +240,10 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
 
           {hasFileOnServer && (
             <button
-              onClick={handleOpenPdfFile}
+              onClick={() => handleOpenPdfFile(doc?.revision)}
               style={{ backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
             >
-              🔍 새 탭에서 등록 파일 열기
+              🔍 새 탭에서 최신 도면 열기
             </button>
           )}
         </div>
@@ -250,7 +252,7 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
         {hasFileOnServer ? (
           <div style={{ width: '100%', height: '500px', backgroundColor: '#525659', borderRadius: '10px', overflow: 'hidden', border: '2px solid #cbd5e1' }}>
             <iframe
-              src={`/api/v1/documents/${doc?.documentId || 811}/file`}
+              src={`/api/v1/documents/${doc?.documentId || 811}/file?revision=${doc?.revision || 'V1-1'}&t=${doc?.updatedAt || Date.now()}`}
               title="Stored Drawing File Viewer"
               style={{ width: '100%', height: '100%', border: 'none' }}
             />
@@ -268,82 +270,84 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '20px', marginBottom: '24px' }}>
         {/* 속성 패널 */}
         <div style={{ backgroundColor: '#ffffff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', marginBottom: '14px' }}>도면 속성 정보</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13.5px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', marginTop: 0, marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
+            도면 속성 정보
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13.5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#64748b' }}>사내 품번 (Part No):</span>
-              <span style={{ fontWeight: '600', color: '#1e293b' }}>{doc?.partNumber || '미발급 (시제품)'}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
-              <span style={{ color: '#64748b' }}>현재 개정 차수:</span>
-              <span style={{ fontWeight: '700', color: '#2563eb' }}>{doc?.revision}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
-              <span style={{ color: '#64748b' }}>CAD 포맷:</span>
-              <span style={{ fontWeight: '600', color: '#1e293b' }}>{doc?.cadType}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
-              <span style={{ color: '#64748b' }}>축척 (Scale):</span>
-              <span style={{ fontWeight: '600', color: '#1e293b' }}>{doc?.scale}</span>
+              <strong style={{ color: '#1e293b' }}>{doc?.partNumber || '미발급 (시제품 샘플)'}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#64748b' }}>현재 개정 차수:</span>
+              <strong style={{ color: '#2563eb' }}>{doc?.revision}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#64748b' }}>CAD 포맷:</span>
+              <span style={{ fontWeight: '600', color: '#334155' }}>PDF</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#64748b' }}>축척 (Scale):</span>
+              <span style={{ fontWeight: '600', color: '#334155' }}>1:1</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#64748b' }}>결재 상태:</span>
-              {doc?.docType === 'EXTERNAL' || doc?.approvalStatus === 'APPROVED' ? (
+              {doc?.docType === 'EXTERNAL' ? (
                 <span style={badgeStyle('#dcfce7', '#15803d')}>🟢 결재 면제 (거래처 수신)</span>
-              ) : doc?.approvalStatus === 'PENDING' ? (
-                <span style={badgeStyle('#eff6ff', '#1d4ed8')}>⏳ 결재 심사 진행중</span>
-              ) : doc?.approvalStatus === 'REJECTED' ? (
-                <span style={badgeStyle('#fef2f2', '#dc2626')}>🔴 결재 반려</span>
               ) : (
-                <span style={badgeStyle('#fef3c7', '#b45309')}>📝 결재 기안 대기중</span>
+                <span style={badgeStyle('#dcfce7', '#15803d')}>🟢 결재 승인 완료</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* SmartManager BOM 패널 */}
+        {/* 외부 BOM 명세 */}
         <div style={{ backgroundColor: '#ffffff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', marginBottom: '14px' }}>SmartManager 외부 BOM 명세</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '8px' }}>시스템</th>
-                <th style={{ padding: '8px' }}>Item ID</th>
-                <th style={{ padding: '8px' }}>자재명</th>
-                <th style={{ padding: '8px' }}>수량</th>
-              </tr>
-            </thead>
-            <tbody>
-              {doc?.bomList && doc.bomList.length > 0 ? (
-                doc.bomList.map((bom, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '8px' }}><span style={badgeStyle('#f0fdf4', '#15803d')}>{bom.itemSource || 'SmartManager'}</span></td>
-                    <td style={{ padding: '8px', fontFamily: 'monospace' }}>{bom.externalItemId || 'SM-MAT-101'}</td>
-                    <td style={{ padding: '8px', fontWeight: '600' }}>{bom.itemName}</td>
-                    <td style={{ padding: '8px', fontWeight: '700' }}>{bom.quantity} {bom.unit}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>등록된 BOM 자재가 없습니다.</td>
+          <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', marginTop: 0, marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
+            SmartManager 외부 BOM 명세
+          </h3>
+          {doc?.bomList && doc.bomList.length > 0 ? (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', textAlign: 'left' }}>
+                  <th style={{ padding: '8px 12px' }}>시스템</th>
+                  <th style={{ padding: '8px 12px' }}>Item ID</th>
+                  <th style={{ padding: '8px 12px' }}>자재명</th>
+                  <th style={{ padding: '8px 12px' }}>수량</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {doc.bomList.map((bom, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '8px 12px', color: '#2563eb', fontWeight: '600' }}>{bom.itemSource || 'SmartManager'}</td>
+                    <td style={{ padding: '8px 12px', fontWeight: '600' }}>{bom.externalItemId}</td>
+                    <td style={{ padding: '8px 12px' }}>{bom.itemName} ({bom.itemCode})</td>
+                    <td style={{ padding: '8px 12px' }}>{bom.quantity} {bom.unit}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{ padding: '30px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+              등록된 BOM 자재가 없습니다.
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 📜 최하단: 도면 개정 이력 타임라인 (Revision Audit Log) */}
-      <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: '24px' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>📜 도면 개정 이력 타임라인 (Revision Audit Log)</span>
-          <span style={badgeStyle('#eff6ff', '#1d4ed8')}>총 {historyList.length}건 차수 이력 누존</span>
-        </h3>
+      {/* 개정 이력 타임라인 (Revision Audit Log) */}
+      <div style={{ backgroundColor: '#ffffff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📜 도면 개정 이력 타임라인 (Revision Audit Log)</span>
+            <span style={{ fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>총 {historyList.length}건 차수 이력 누적</span>
+          </h3>
+        </div>
 
-        <div style={{ border: '1px solid #cbd5e1', borderRadius: '10px', overflow: 'hidden' }}>
+        <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f1f5f9', color: '#334155', textAlign: 'left', fontWeight: '600' }}>
+              <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', textAlign: 'left' }}>
                 <th style={{ padding: '10px 12px' }}>버전</th>
                 <th style={{ padding: '10px 12px' }}>개정 차수</th>
                 <th style={{ padding: '10px 12px' }}>개정 변경 사유 (Audit Log)</th>
@@ -353,10 +357,10 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
               </tr>
             </thead>
             <tbody>
-              {historyList.map((item, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: item.status === 'ACTIVE' ? '#f0fdf4' : '#ffffff' }}>
-                  <td style={{ padding: '10px 12px', fontWeight: '700', color: '#64748b' }}>v{item.version}</td>
-                  <td style={{ padding: '10px 12px', fontWeight: '700', color: '#2563eb' }}>{item.revision}</td>
+              {historyList.map((item, index) => (
+                <tr key={index} style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: item.status === 'ACTIVE' ? '#f0fdf4' : '#ffffff' }}>
+                  <td style={{ padding: '10px 12px', fontWeight: '700', color: item.status === 'ACTIVE' ? '#166534' : '#64748b' }}>v{item.version}</td>
+                  <td style={{ padding: '10px 12px', fontWeight: '700', color: item.status === 'ACTIVE' ? '#166534' : '#2563eb' }}>{item.revision}</td>
                   <td style={{ padding: '10px 12px', fontWeight: '600', color: '#0f172a' }}>{item.changeReason}</td>
                   <td style={{ padding: '10px 12px', color: '#475569' }}>{item.author}</td>
                   <td style={{ padding: '10px 12px', color: '#64748b' }}>{item.createdAt}</td>
@@ -364,8 +368,8 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
                     {item.status === 'ACTIVE' ? (
                       <span style={badgeStyle('#dcfce7', '#15803d')}>🟢 현행 최신차수</span>
                     ) : (
-                      <button onClick={handleOpenPdfFile} style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '6px', fontSize: '11.5px', cursor: 'pointer' }}>
-                        📦 구버전 도면 열기
+                      <button onClick={() => handleOpenPdfFile(item.revision)} style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '6px', fontSize: '11.5px', cursor: 'pointer' }}>
+                        📦 구버전 도면 열기 ({item.revision})
                       </button>
                     )}
                   </td>

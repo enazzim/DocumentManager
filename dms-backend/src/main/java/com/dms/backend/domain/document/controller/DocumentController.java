@@ -59,7 +59,10 @@ public class DocumentController {
             Files.createDirectories(uploadPath);
         }
 
-        String targetFileName = documentId + "_" + file.getOriginalFilename();
+        DocumentResponse doc = documentService.getDocument(documentId);
+        String rev = (doc != null && doc.getRevision() != null) ? doc.getRevision() : "V1-1";
+
+        String targetFileName = documentId + "_" + rev + "_" + file.getOriginalFilename();
         Path targetPath = uploadPath.resolve(targetFileName);
         Files.copy(file.getInputStream(), targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
@@ -107,45 +110,73 @@ public class DocumentController {
 
         log.info("REST Request to Revision Up document #{}: newRevision={}, changeReason={}", documentId, newRevision, changeReason);
 
+        DocumentResponse response = documentService.revisionUpDocument(documentId, newRevision, changeReason);
+
         if (file != null && !file.isEmpty()) {
             Path uploadPath = Paths.get(UPLOAD_DIR);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
 
-            File folder = uploadPath.toFile();
-            File[] oldFiles = folder.listFiles((dir, name) -> name.startsWith(documentId + "_"));
-            if (oldFiles != null) {
-                for (File f : oldFiles) {
-                    f.delete();
-                }
-            }
-
-            String targetFileName = documentId + "_" + file.getOriginalFilename();
+            String targetFileName = documentId + "_" + newRevision + "_" + file.getOriginalFilename();
             Path targetPath = uploadPath.resolve(targetFileName);
             Files.copy(file.getInputStream(), targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            log.info("Revision file updated on disk: {}", targetPath.toAbsolutePath());
+            log.info("Revision file saved on disk: {}", targetPath.toAbsolutePath());
         }
 
-        DocumentResponse response = documentService.revisionUpDocument(documentId, newRevision, changeReason);
         return ApiResponse.success(response);
     }
 
     /**
      * 📄 백엔드 로컬 물리 저장소(uploads/drawings/)에 저장된 실제 도면 파일 서빙
+     * ?revision=V1-1 구버전 조회 및 ?download=true 지원
      */
     @GetMapping("/{documentId}/file")
     public ResponseEntity<Resource> getDocumentFile(
             @PathVariable Long documentId,
+            @RequestParam(value = "revision", required = false) String revisionParam,
             @RequestParam(value = "download", required = false, defaultValue = "false") boolean download) {
-        log.info("REST Request to view stored document file for doc #{}, downloadMode={}", documentId, download);
+        log.info("REST Request to view stored document file for doc #{}, revisionParam={}, downloadMode={}", documentId, revisionParam, download);
 
-        // 1. 해당 문서 ID(documentId)의 실제 업로드 파일만 탐색
         File folder = new File(UPLOAD_DIR);
         if (folder.exists() && folder.isDirectory()) {
             File[] matchingFiles = folder.listFiles((dir, name) -> name.startsWith(documentId + "_"));
             if (matchingFiles != null && matchingFiles.length > 0) {
-                File targetFile = matchingFiles[0];
+                File targetFile = null;
+
+                // 1. 특정 개정 차수(revisionParam) 요청 시 해당 차수 파일 검색
+                if (revisionParam != null && !revisionParam.trim().isEmpty()) {
+                    String reqRev = revisionParam.trim();
+                    for (File f : matchingFiles) {
+                        if (f.getName().startsWith(documentId + "_" + reqRev + "_") || f.getName().contains("_" + reqRev + "_")) {
+                            targetFile = f;
+                            break;
+                        }
+                    }
+                }
+
+                // 2. 차수 미지정 시 DB의 최신 차수 파일 탐색
+                if (targetFile == null) {
+                    try {
+                        DocumentResponse doc = documentService.getDocument(documentId);
+                        String currentRev = (doc != null && doc.getRevision() != null) ? doc.getRevision() : null;
+                        if (currentRev != null) {
+                            for (File f : matchingFiles) {
+                                if (f.getName().startsWith(documentId + "_" + currentRev + "_") || f.getName().contains("_" + currentRev + "_")) {
+                                    targetFile = f;
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                // 3. 최신 수정 시각(lastModified) 기준 파일 선택
+                if (targetFile == null) {
+                    java.util.Arrays.sort(matchingFiles, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
+                    targetFile = matchingFiles[0];
+                }
+
                 log.info("Found matching document file on disk: {}", targetFile.getAbsolutePath());
                 Resource resource = new FileSystemResource(targetFile);
 
@@ -158,7 +189,9 @@ public class DocumentController {
                 String customFileName;
                 try {
                     DocumentResponse doc = documentService.getDocument(documentId);
-                    String rev = (doc != null && doc.getRevision() != null) ? doc.getRevision() : "V1";
+                    String rev = (revisionParam != null && !revisionParam.trim().isEmpty())
+                            ? revisionParam.trim()
+                            : ((doc != null && doc.getRevision() != null) ? doc.getRevision() : "V1");
                     String num = (doc != null && doc.getDocNumber() != null) ? doc.getDocNumber() : ("DOC_" + documentId);
                     customFileName = num + "_" + rev + ext;
                 } catch (Exception e) {
@@ -179,7 +212,6 @@ public class DocumentController {
             }
         }
 
-        // 2. 해당 문서에 첨부된 실제 파일이 없는 경우 404 Not Found 반환 (다른 도면 오버랩 방지!)
         log.warn("No file stored on disk for document #{}", documentId);
         return ResponseEntity.notFound().build();
     }
