@@ -142,27 +142,42 @@ public class DocumentController {
         if (folder.exists() && folder.isDirectory()) {
             File[] matchingFiles = folder.listFiles((dir, name) -> name.startsWith(documentId + "_"));
             if (matchingFiles != null && matchingFiles.length > 0) {
+                // 1. 파일들을 파일 생성/수정시각(lastModified) 오름차순(과거 -> 최근)으로 정렬
+                java.util.Arrays.sort(matchingFiles, (f1, f2) -> Long.compare(f1.lastModified(), f2.lastModified()));
+
                 File targetFile = null;
 
-                // 1. 특정 개정 차수(revisionParam) 요청 시 해당 차수 파일 검색
+                // 2. 특정 개정 차수(revisionParam) 요청 시 해당 차수 파일 검색
                 if (revisionParam != null && !revisionParam.trim().isEmpty()) {
-                    String reqRev = revisionParam.trim();
+                    String reqRev = revisionParam.trim().toUpperCase();
+
+                    // 2-1. 파일명 명시적 차수 태그 매핑 검색 ({documentId}_{reqRev}_)
                     for (File f : matchingFiles) {
-                        if (f.getName().startsWith(documentId + "_" + reqRev + "_") || f.getName().contains("_" + reqRev + "_")) {
+                        String upperName = f.getName().toUpperCase();
+                        if (upperName.startsWith(documentId + "_" + reqRev + "_") || upperName.contains("_" + reqRev + "_")) {
                             targetFile = f;
                             break;
                         }
                     }
+
+                    // 2-2. 과거 등록 파일 등 명시적 차수가 없는 경우: 시순 서열 기반(1-indexed) 1:1 파일 매핑
+                    if (targetFile == null) {
+                        int vIdx = parseVersionIndexFromRevision(reqRev);
+                        if (vIdx >= 0 && vIdx < matchingFiles.length) {
+                            targetFile = matchingFiles[vIdx];
+                        }
+                    }
                 }
 
-                // 2. 차수 미지정 시 DB의 최신 차수 파일 탐색
+                // 3. 차수 미지정 시 (메인 뷰어 최신 도면 요청)
                 if (targetFile == null) {
                     try {
                         DocumentResponse doc = documentService.getDocument(documentId);
-                        String currentRev = (doc != null && doc.getRevision() != null) ? doc.getRevision() : null;
+                        String currentRev = (doc != null && doc.getRevision() != null) ? doc.getRevision().toUpperCase() : null;
                         if (currentRev != null) {
                             for (File f : matchingFiles) {
-                                if (f.getName().startsWith(documentId + "_" + currentRev + "_") || f.getName().contains("_" + currentRev + "_")) {
+                                String upperName = f.getName().toUpperCase();
+                                if (upperName.startsWith(documentId + "_" + currentRev + "_") || upperName.contains("_" + currentRev + "_")) {
                                     targetFile = f;
                                     break;
                                 }
@@ -171,10 +186,9 @@ public class DocumentController {
                     } catch (Exception ignored) {}
                 }
 
-                // 3. 최신 수정 시각(lastModified) 기준 파일 선택
+                // 4. 여전히 선택된 파일이 없는 경우, 오름차순 목록의 맨 마지막(가장 최근 파일) 선택
                 if (targetFile == null) {
-                    java.util.Arrays.sort(matchingFiles, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
-                    targetFile = matchingFiles[0];
+                    targetFile = matchingFiles[matchingFiles.length - 1];
                 }
 
                 log.info("Found matching document file on disk: {}", targetFile.getAbsolutePath());
@@ -214,5 +228,15 @@ public class DocumentController {
 
         log.warn("No file stored on disk for document #{}", documentId);
         return ResponseEntity.notFound().build();
+    }
+
+    private int parseVersionIndexFromRevision(String revStr) {
+        if (revStr == null) return 0;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("^V?(\\d+)(?:[-.](\\d+))?$", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(revStr.trim());
+        if (m.find()) {
+            int minor = m.group(2) != null ? Integer.parseInt(m.group(2)) : 1;
+            return Math.max(0, minor - 1);
+        }
+        return 0;
     }
 }
