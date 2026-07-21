@@ -135,8 +135,10 @@ public class DocumentController {
      * 📄 백엔드 로컬 물리 저장소(uploads/drawings/)에 저장된 실제 도면 파일 서빙
      */
     @GetMapping("/{documentId}/file")
-    public ResponseEntity<Resource> getDocumentFile(@PathVariable Long documentId) {
-        log.info("REST Request to view stored document file for doc #{}", documentId);
+    public ResponseEntity<Resource> getDocumentFile(
+            @PathVariable Long documentId,
+            @RequestParam(value = "download", required = false, defaultValue = "false") boolean download) {
+        log.info("REST Request to view stored document file for doc #{}, downloadMode={}", documentId, download);
 
         // 1. 해당 문서 ID(documentId)의 실제 업로드 파일만 탐색
         File folder = new File(UPLOAD_DIR);
@@ -146,8 +148,13 @@ public class DocumentController {
                 File targetFile = matchingFiles[0];
                 log.info("Found matching document file on disk: {}", targetFile.getAbsolutePath());
                 Resource resource = new FileSystemResource(targetFile);
+
+                String disposition = download
+                        ? "attachment; filename=\"" + targetFile.getName() + "\""
+                        : "inline; filename=\"" + targetFile.getName() + "\"";
+
                 return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + targetFile.getName() + "\"")
+                        .header(HttpHeaders.CONTENT_DISPOSITION, disposition)
                         .contentType(MediaType.APPLICATION_PDF)
                         .body(resource);
             }

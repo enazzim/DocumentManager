@@ -118,6 +118,20 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
     window.open(fileApiUrl, '_blank');
   };
 
+  const handleDownloadPdfFile = () => {
+    if (!hasFileOnServer) {
+      alert('해당 도면에는 백엔드/S3 저장소에 등록 보관된 파일이 없습니다.');
+      return;
+    }
+    const fileApiUrl = `/api/v1/documents/${doc?.documentId || 811}/file?download=true`;
+    const link = document.createElement('a');
+    link.href = fileApiUrl;
+    link.download = `${doc?.docNumber}_${doc?.revision || 'V1'}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return <div style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>도면 상세 정보 및 개정 이력을 로딩 중입니다...</div>;
   }
@@ -165,10 +179,10 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
             🔄 도면 차수 개정 (Revision Up)
           </button>
           <button
-            onClick={handleOpenPdfFile}
+            onClick={handleDownloadPdfFile}
             style={{ backgroundColor: hasFileOnServer ? '#059669' : '#94a3b8', color: '#ffffff', border: 'none', padding: '10px 18px', borderRadius: '8px', fontWeight: '700', fontSize: '13.5px', cursor: hasFileOnServer ? 'pointer' : 'not-allowed' }}
           >
-            📥 등록 도면 파일 열기 / 다운로드
+            📥 등록 도면 파일 바로 다운로드
           </button>
         </div>
       </div>
