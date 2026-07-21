@@ -19,84 +19,27 @@ export const DrawingListView: React.FC<DrawingListViewProps> = ({
   const [stageFilter, setStageFilter] = useState<'ALL' | 'DEVELOPMENT' | 'MASS_PRODUCTION'>('ALL');
 
   // 정상 도면 대장 목록
-  const [documents, setDocuments] = useState<DocumentResponse[]>([
-    {
-      documentId: 2,
-      docNumber: 'TB44-0073_A',
-      title: '[개발/시제품] TB44-0073_A 메인 전선 하네스',
-      docType: 'EXTERNAL',
-      approvalStatus: 'DRAFT',
-      lifecycleStatus: 'DEVELOPMENT',
-      fileStatus: 'UPLOADED',
-      version: 1,
-      partNumber: '미발급 (시제품 샘플)',
-      partName: 'TB44-0073_A 메인 하네스',
-      revision: 'V1-1',
-      cadType: 'PDF',
-      scale: '1:1',
-      bomList: [{ externalItemId: 'SM-MAT-101', itemCode: 'WIRE-0.5SQ-RED', itemName: '자동차용 전선 0.5SQ Red', itemSource: 'SmartManager', quantity: 12.5, unit: 'M' }],
-      createdAt: '2026-07-21T15:25:00Z',
-      updatedAt: '2026-07-21T15:25:00Z'
-    },
-    {
-      documentId: 1,
-      docNumber: 'DWG-2026-HYUNDAI-V1',
-      title: '[양산확정] 현대차 와이어링 하네스 도면',
-      docType: 'EXTERNAL',
-      approvalStatus: 'APPROVED',
-      lifecycleStatus: 'MASS_PRODUCTION',
-      fileStatus: 'ACTIVE',
-      version: 1,
-      partNumber: 'PN-90812',
-      partName: '현대차 와이어링',
-      revision: 'V1',
-      cadType: 'AUTOCAD',
-      scale: '1:1',
-      bomList: [
-        { externalItemId: 'SM-MAT-101', itemCode: 'WIRE-0.5SQ-RED', itemName: '자동차용 전선 0.5SQ Red', itemSource: 'SmartManager', quantity: 20, unit: 'M' },
-        { externalItemId: 'SM-C-990', itemCode: 'CONN-HEADER-12P', itemName: '12핀 헤더 커넥터', itemSource: 'SmartManager', quantity: 2, unit: 'EA' }
-      ],
-      createdAt: '2026-07-21T14:30:00Z',
-      updatedAt: '2026-07-21T14:30:00Z'
-    }
-  ]);
+  const [documents, setDocuments] = useState<DocumentResponse[]>([]);
 
   // 도면 휴지통 (삭제 보관함) 목록
-  const [trashDocuments, setTrashDocuments] = useState<DocumentResponse[]>([
-    {
-      documentId: 99,
-      docNumber: 'OLD-DWG-2025-09',
-      title: '[오등록 삭제] 2025년 이월 폐기 도면',
-      docType: 'INTERNAL',
-      approvalStatus: 'REJECTED',
-      lifecycleStatus: 'DEVELOPMENT',
-      fileStatus: 'ARCHIVED',
-      version: 1,
-      partNumber: '폐기',
-      partName: '이월 폐기 도면',
-      revision: 'V0-9',
-      cadType: 'PDF',
-      scale: '1:1',
-      bomList: [],
-      createdAt: '2026-07-20T10:00:00Z',
-      updatedAt: '2026-07-20T10:00:00Z'
-    }
-  ]);
+  const [trashDocuments, setTrashDocuments] = useState<DocumentResponse[]>([]);
 
-  // 백엔드 실시간 목록 수신
+  // 백엔드 실시간 DB 목록 수신
   useEffect(() => {
     const fetchDocs = async () => {
       try {
         const response = await axios.get('/api/v1/documents');
         const docs = response.data?.data || response.data || [];
-        if (Array.isArray(docs) && docs.length > 0) {
+        if (Array.isArray(docs)) {
           const actives = docs.filter((d: any) => !d.isDeleted);
           const trashes = docs.filter((d: any) => d.isDeleted);
-          if (actives.length > 0) setDocuments(actives);
-          if (trashes.length > 0) setTrashDocuments(trashes);
+          setDocuments(actives);
+          setTrashDocuments(trashes);
         }
       } catch (e) {
-        console.log('목록 수신 (Fallback 활성화)');
+        console.warn('DB 목록 수신 중 오류 또는 결과 없음:', e);
+        setDocuments([]);
+        setTrashDocuments([]);
       }
     };
     fetchDocs();

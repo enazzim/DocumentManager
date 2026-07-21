@@ -17,7 +17,7 @@ interface RevisionHistoryItem {
   status: 'ACTIVE' | 'SUPERSEDED';
 }
 
-export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId = 811 }) => {
+export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId }) => {
   const [doc, setDoc] = useState<DocumentResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
@@ -31,56 +31,42 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
   useEffect(() => {
     const fetchDetail = async () => {
       setLoading(true);
-      const targetId = documentId || 811;
+      if (!documentId) {
+        setDoc(null);
+        setLoading(false);
+        return;
+      }
       
       try {
-        const data = await getDocumentApi(targetId);
+        const data = await getDocumentApi(documentId);
         if (data && data.docNumber) {
           setDoc(data);
+          setHistoryList([
+            {
+              version: data.version || 1,
+              revision: data.revision || 'V1',
+              changeReason: `[기안 등록] ${data.title} (${data.docNumber}) 등록 완료`,
+              author: '시스템 사용자',
+              createdAt: data.createdAt ? new Date(data.createdAt).toLocaleString() : new Date().toLocaleString(),
+              status: 'ACTIVE'
+            }
+          ]);
         } else {
-          throw new Error('Fallback');
+          setDoc(null);
         }
       } catch (err: any) {
-        // 백엔드 미연결/에러 시 안전 폴백
-        setDoc({
-          documentId: targetId,
-          docNumber: 'TB44-0073_A',
-          title: '[개발/시제품] TB44-0073_A 메인 전선 하네스',
-          docType: 'EXTERNAL',
-          approvalStatus: 'DRAFT',
-          lifecycleStatus: 'DEVELOPMENT',
-          fileStatus: 'UPLOADED',
-          version: 1,
-          partNumber: '미발급 (시제품 샘플 단계)',
-          partName: 'TB44-0073_A 파이프 하네스',
-          revision: 'V1-1',
-          cadType: 'PDF',
-          scale: '1:1',
-          presignedUploadUrl: `/api/v1/documents/${targetId}/file`,
-          bomList: [],
-          createdAt: '2026-07-21T15:25:00Z',
-          updatedAt: '2026-07-21T15:25:00Z'
-        });
+        console.warn('도면 상세정보 수신 오류:', err);
+        setDoc(null);
       } finally {
-        // 서버 실제 파일존재 유무 404 검증
-        try {
-          const fileCheckUrl = `/api/v1/documents/${targetId}/file`;
-          await axios.head(fileCheckUrl);
-          setHasFileOnServer(true);
-        } catch (fileErr) {
-          setHasFileOnServer(false);
-        }
-
-        setHistoryList([
-          {
-            version: 1,
-            revision: 'V1-1',
-            changeReason: `[최초 신규 등록] TB44-0073_A 거래처 수신 도면 기안 등록`,
-            author: '홍길동 수석연구원',
-            createdAt: new Date().toLocaleString(),
-            status: 'ACTIVE'
+        if (documentId) {
+          try {
+            const fileCheckUrl = `/api/v1/documents/${documentId}/file`;
+            await axios.head(fileCheckUrl);
+            setHasFileOnServer(true);
+          } catch (fileErr) {
+            setHasFileOnServer(false);
           }
-        ]);
+        }
         setLoading(false);
       }
     };

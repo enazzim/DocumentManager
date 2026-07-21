@@ -55,7 +55,7 @@ export const DrawingUploadForm: React.FC<DrawingUploadFormProps> = ({ onSuccessN
     try {
       const response = await axios.get('/api/v1/documents');
       const docs = response.data?.data || response.data || [];
-      if (Array.isArray(docs) && docs.length > 0) {
+      if (Array.isArray(docs)) {
         const mapped: MiniDocRecord[] = docs.map((d: any) => ({
           documentId: d.documentId || d.id,
           docNumber: d.docNumber,
@@ -69,29 +69,10 @@ export const DrawingUploadForm: React.FC<DrawingUploadFormProps> = ({ onSuccessN
         return;
       }
     } catch (e) {
-      console.log('서버 실시간 목록 수신 (Fallback 활성화)');
+      console.warn('서버 실시간 목록 수신 실패:', e);
     }
 
-    setRecentDocs([
-      {
-        documentId: 811,
-        docNumber: 'TB44-0073_A',
-        title: '[개발/시제품] TB44-0073_A 메인 전선 하네스',
-        stage: 'DEVELOPMENT',
-        revision: 'V1-1',
-        fileName: 'TB44-0073_A.pdf',
-        createdAt: '방금 전'
-      },
-      {
-        documentId: 1,
-        docNumber: 'DWG-2026-HYUNDAI-V1',
-        title: '[양산확정] 현대차 와이어링 하네스 도면',
-        stage: 'MASS_PRODUCTION',
-        revision: 'V1',
-        fileName: 'HYUNDAI_WIRING_V1.dwg',
-        createdAt: '오늘 14:30'
-      }
-    ]);
+    setRecentDocs([]);
   };
 
   useEffect(() => {
@@ -114,17 +95,7 @@ export const DrawingUploadForm: React.FC<DrawingUploadFormProps> = ({ onSuccessN
           setBomList(doc.bomList || []);
           setMessage(`[수정 모드] 문서 ID #${editDocumentId} (${doc.docNumber}) 기존 등록 데이터 로딩 완료`);
         } catch (e) {
-          if (editDocumentId === 811 || editDocumentId === 1) {
-            setDocNumber('TB44-0073_A');
-            setTitle('TB44-0073_A 메인 전선 하네스');
-            setStage('DEVELOPMENT');
-            setRevision('V1-1');
-            setPartNumber('미발급 (시제품 샘플)');
-            setBomList([
-              { externalItemId: 'SM-MAT-101', itemCode: 'WIRE-0.5SQ-RED', itemName: '자동차용 전선 0.5SQ Red', itemSource: 'SmartManager', quantity: 12.5, unit: 'M' }
-            ]);
-            setMessage(`[수정 모드] 문서 ID #${editDocumentId} (TB44-0073_A) 기존 등록 데이터 로딩 완료!`);
-          }
+          setMessage(`[수정 오류] 문서 ID #${editDocumentId} 도면 정보를 불러올 수 없습니다.`);
         } finally {
           setLoading(false);
         }
