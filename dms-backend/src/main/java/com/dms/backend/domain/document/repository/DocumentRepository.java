@@ -12,6 +12,7 @@ import java.util.Optional;
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Long> {
     Optional<Document> findByDocNumber(String docNumber);
+    Optional<Document> findByDocNumberAndIsDeletedFalse(String docNumber);
     List<Document> findByApprovalStatus(ApprovalStatus status);
     List<Document> findByLifecycleStatus(LifecycleStatus status);
 }

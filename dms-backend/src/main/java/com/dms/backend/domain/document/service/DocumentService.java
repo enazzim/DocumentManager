@@ -49,11 +49,12 @@ public class DocumentService {
             initialLifecycle = LifecycleStatus.DEVELOPMENT;
         }
 
-        Document document = documentRepository.findByDocNumber(request.getDocNumber())
+        Document document = documentRepository.findByDocNumberAndIsDeletedFalse(request.getDocNumber())
                 .orElseGet(() -> Document.builder()
                         .docNumber(request.getDocNumber())
                         .authorId(request.getAuthorId() != null ? request.getAuthorId() : 1L)
                         .version(1)
+                        .isDeleted(false)
                         .build());
 
         document.setTitle(request.getTitle());
