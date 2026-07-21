@@ -149,9 +149,28 @@ public class DocumentController {
                 log.info("Found matching document file on disk: {}", targetFile.getAbsolutePath());
                 Resource resource = new FileSystemResource(targetFile);
 
+                String ext = ".pdf";
+                int dotIdx = targetFile.getName().lastIndexOf('.');
+                if (dotIdx >= 0) {
+                    ext = targetFile.getName().substring(dotIdx);
+                }
+
+                String customFileName;
+                try {
+                    DocumentResponse doc = documentService.getDocument(documentId);
+                    String rev = (doc != null && doc.getRevision() != null) ? doc.getRevision() : "V1";
+                    String num = (doc != null && doc.getDocNumber() != null) ? doc.getDocNumber() : ("DOC_" + documentId);
+                    customFileName = num + "_" + rev + ext;
+                } catch (Exception e) {
+                    customFileName = targetFile.getName();
+                }
+
+                String encodedFileName = java.net.URLEncoder.encode(customFileName, java.nio.charset.StandardCharsets.UTF_8.name())
+                        .replaceAll("\\+", "%20");
+
                 String disposition = download
-                        ? "attachment; filename=\"" + targetFile.getName() + "\""
-                        : "inline; filename=\"" + targetFile.getName() + "\"";
+                        ? "attachment; filename=\"" + customFileName + "\"; filename*=UTF-8''" + encodedFileName
+                        : "inline; filename=\"" + customFileName + "\"; filename*=UTF-8''" + encodedFileName;
 
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, disposition)
