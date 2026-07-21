@@ -214,7 +214,15 @@ export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#64748b' }}>결재 상태:</span>
-              <span style={badgeStyle('#fef3c7', '#b45309')}>{doc?.approvalStatus} (작성중)</span>
+              {doc?.docType === 'EXTERNAL' || doc?.approvalStatus === 'APPROVED' ? (
+                <span style={badgeStyle('#dcfce7', '#15803d')}>🟢 결재 면제 (거래처 수신)</span>
+              ) : doc?.approvalStatus === 'PENDING' ? (
+                <span style={badgeStyle('#eff6ff', '#1d4ed8')}>⏳ 결재 심사 진행중</span>
+              ) : doc?.approvalStatus === 'REJECTED' ? (
+                <span style={badgeStyle('#fef2f2', '#dc2626')}>🔴 결재 반려</span>
+              ) : (
+                <span style={badgeStyle('#fef3c7', '#b45309')}>📝 결재 기안 대기중</span>
+              )}
             </div>
           </div>
         </div>
