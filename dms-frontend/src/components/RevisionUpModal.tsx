@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { revisionUpDocumentApi } from '../api/documentApi';
 import type { DocumentResponse } from '../api/documentApi';
 
@@ -9,14 +9,75 @@ interface RevisionUpModalProps {
   onSuccessRevision: (newRevisionDoc: DocumentResponse) => void;
 }
 
+// 개정 차수 파싱 및 다음 개정 버전 제안 함수 (V1-2 -> minor: V1-3, major: V2-1)
+const parseRevision = (revStr?: string) => {
+  const match = (revStr || 'V1-1').match(/^V?(\d+)(?:[-.](\d+))?$/i);
+  let major = 1;
+  let minor = 1;
+  if (match) {
+    major = parseInt(match[1], 10) || 1;
+    minor = match[2] ? parseInt(match[2], 10) : 1;
+  }
+  const minorNext = `V${major}-${minor + 1}`;
+  const majorNext = `V${major + 1}-1`;
+  return { major, minor, minorNext, majorNext };
+};
+
+// 개정 차수 유효성 검증 함수 (동일 차수 및 마이너스/이전 차수 차단)
+const validateRevision = (currentRevStr: string, newRevStr: string): string | null => {
+  const curTrim = (currentRevStr || 'V1-1').trim().toUpperCase();
+  const newTrim = (newRevStr || '').trim().toUpperCase();
+
+  if (!newTrim) {
+    return '신규 개정 차수를 입력해 주세요.';
+  }
+
+  if (newTrim === curTrim) {
+    return `신규 개정 차수가 기존 차수(${currentRevStr})와 동일합니다. 개정 차수를 올려주세요.`;
+  }
+
+  const curMatch = curTrim.match(/^V?(\d+)(?:[-.](\d+))?$/i);
+  const newMatch = newTrim.match(/^V?(\d+)(?:[-.](\d+))?$/i);
+
+  if (curMatch && newMatch) {
+    const curMajor = parseInt(curMatch[1], 10) || 1;
+    const curMinor = curMatch[2] ? parseInt(curMatch[2], 10) : 0;
+    const newMajor = parseInt(newMatch[1], 10) || 1;
+    const newMinor = newMatch[2] ? parseInt(newMatch[2], 10) : 0;
+
+    const curVal = curMajor * 1000 + curMinor;
+    const newVal = newMajor * 1000 + newMinor;
+
+    if (newVal <= curVal) {
+      return `기존 차수(${currentRevStr})보다 낮거나 이전 차수로 개정할 수 없습니다.`;
+    }
+  }
+
+  return null; // 정상
+};
+
 export const RevisionUpModal: React.FC<RevisionUpModalProps> = ({ isOpen, doc, onClose, onSuccessRevision }) => {
-  const [newRevision, setNewRevision] = useState('V1-2');
+  const currentRev = doc?.revision || 'V1-1';
+  const { minorNext, majorNext } = parseRevision(currentRev);
+
+  const [newRevision, setNewRevision] = useState(minorNext);
   const [changeReason, setChangeReason] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (doc && isOpen) {
+      const { minorNext: calculatedMinor } = parseRevision(doc.revision);
+      setNewRevision(calculatedMinor);
+      setChangeReason('');
+      setSelectedFile(null);
+    }
+  }, [doc, isOpen]);
+
   if (!isOpen || !doc) return null;
+
+  const validationError = validateRevision(currentRev, newRevision);
 
   const MAX_FILE_SIZE_MB = 500;
   const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -60,6 +121,11 @@ export const RevisionUpModal: React.FC<RevisionUpModalProps> = ({ isOpen, doc, o
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (validationError) {
+      alert(`[개정 차수 입력 오류]\n\n${validationError}`);
+      return;
+    }
 
     if (!changeReason.trim()) {
       alert('개정 사유(예: 거래처 사양 변경으로 전선 길이 5cm 연장)를 작성해 주세요!');
@@ -107,21 +173,49 @@ export const RevisionUpModal: React.FC<RevisionUpModalProps> = ({ isOpen, doc, o
 
         <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
           {/* 이전 차수 vs 신규 차수 정보 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', backgroundColor: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', display: 'block' }}>기존 도면 차수</label>
-              <div style={{ fontSize: '16px', fontWeight: '700', color: '#64748b', marginTop: '4px' }}>{doc.revision} (구버전 이력보관)</div>
+          <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', display: 'block' }}>기존 도면 차수</label>
+                <div style={{ fontSize: '16px', fontWeight: '700', color: '#64748b', marginTop: '4px' }}>{doc.revision} (구버전 이력보관)</div>
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: '#2563eb', fontWeight: '600', display: 'block' }}>신규 개정 차수 *</label>
+                <input
+                  type="text"
+                  required
+                  value={newRevision}
+                  onChange={(e) => setNewRevision(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', border: validationError ? '2px solid #dc2626' : '2px solid #2563eb', borderRadius: '6px', fontSize: '15px', fontWeight: '700', color: validationError ? '#dc2626' : '#2563eb', outline: 'none', marginTop: '4px', boxSizing: 'border-box' }}
+                />
+              </div>
             </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#2563eb', fontWeight: '600', display: 'block' }}>신규 개정 차수 *</label>
-              <input
-                type="text"
-                required
-                value={newRevision}
-                onChange={(e) => setNewRevision(e.target.value)}
-                style={{ width: '100%', padding: '8px 12px', border: '2px solid #2563eb', borderRadius: '6px', fontSize: '15px', fontWeight: '700', color: '#2563eb', outline: 'none', marginTop: '4px', boxSizing: 'border-box' }}
-              />
+
+            {/* 빠른 원클릭 제안 버튼 (마이너 vs 메이저) */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+              <span style={{ fontSize: '12px', color: '#475569', fontWeight: '600' }}>💡 자동 차수 제안:</span>
+              <button
+                type="button"
+                onClick={() => setNewRevision(minorNext)}
+                style={{ backgroundColor: newRevision === minorNext ? '#2563eb' : '#ffffff', color: newRevision === minorNext ? '#ffffff' : '#2563eb', border: '1px solid #2563eb', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+              >
+                🔹 마이너 개정 (+1): {minorNext}
+              </button>
+              <button
+                type="button"
+                onClick={() => setNewRevision(majorNext)}
+                style={{ backgroundColor: newRevision === majorNext ? '#7c3aed' : '#ffffff', color: newRevision === majorNext ? '#ffffff' : '#7c3aed', border: '1px solid #7c3aed', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+              >
+                👑 메이저 개정: {majorNext}
+              </button>
             </div>
+
+            {/* 실시간 유효성 경고 메세지 */}
+            {validationError && (
+              <div style={{ fontSize: '12px', color: '#dc2626', fontWeight: '700', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                ⚠️ {validationError}
+              </div>
+            )}
           </div>
 
           {/* 개정 사유 입력 */}
@@ -192,8 +286,8 @@ export const RevisionUpModal: React.FC<RevisionUpModalProps> = ({ isOpen, doc, o
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              style={{ backgroundColor: isSubmitting ? '#94a3b8' : '#2563eb', color: '#ffffff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '700', fontSize: '13.5px', cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
+              disabled={isSubmitting || !!validationError}
+              style={{ backgroundColor: isSubmitting || validationError ? '#94a3b8' : '#2563eb', color: '#ffffff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '700', fontSize: '13.5px', cursor: isSubmitting || validationError ? 'not-allowed' : 'pointer' }}
             >
               {isSubmitting ? '⏳ DB 및 도면 개정 저장 중...' : `🔄 ${newRevision} 차수 개정 완료 & 이력 저장`}
             </button>
