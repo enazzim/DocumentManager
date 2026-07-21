@@ -155,12 +155,14 @@ public class DocumentService {
      */
     @Transactional
     public void deleteDocument(Long documentId) {
-        Document document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
-
-        drawingBomRepository.deleteByDocument_DocumentId(documentId);
-        drawingDetailRepository.deleteByDocument_DocumentId(documentId);
-        documentRepository.delete(document);
-        log.info("[도면 삭제] 문서 ID #{} 안전 폐기 완료", documentId);
+        java.util.Optional<Document> docOpt = documentRepository.findById(documentId);
+        if (docOpt.isPresent()) {
+            drawingBomRepository.deleteByDocument_DocumentId(documentId);
+            drawingDetailRepository.deleteByDocument_DocumentId(documentId);
+            documentRepository.delete(docOpt.get());
+            log.info("[도면 삭제] 문서 ID #{} 안전 폐기 완료", documentId);
+        } else {
+            log.warn("[도면 삭제] DB에 존재하지 않거나 이미 삭제 처리된 문서 ID #{}, 정상 성공 응답 반환", documentId);
+        }
     }
 }
