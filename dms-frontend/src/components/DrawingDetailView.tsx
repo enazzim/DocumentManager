@@ -17,6 +17,8 @@ interface RevisionHistoryItem {
   status: 'ACTIVE' | 'SUPERSEDED';
 }
 
+const CURRENT_LOGGED_IN_USER = '홍길동 수석연구원';
+
 export const DrawingDetailView: React.FC<DrawingDetailViewProps> = ({ documentId }) => {
   const [doc, setDoc] = useState<DocumentResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
